@@ -77,23 +77,28 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
 
   if (error) {
     return (
-      <div className="w-full h-screen bg-black flex flex-col items-center justify-center p-4 text-center">
-        <p className="text-red-500 mb-4">{error}</p>
-        <button
-          onClick={onBack}
-          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg"
-        >
+      <div className="error-container">
+        <p className="error-message">{error}</p>
+        <button onClick={onBack} className="error-button">
           Go Back
         </button>
       </div>
     );
   }
 
+  const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only toggle play if clicking on the video container itself, not controls
+    if (e.target === e.currentTarget) {
+      togglePlay();
+    }
+  };
+
   return (
     <div
       ref={playerContainerRef}
-      className="w-full h-screen bg-black flex items-center justify-center relative group"
+      className="player-container"
       onDoubleClick={toggleFullscreen}
+      onClick={handleContainerClick}
     >
       <video
         ref={videoRef}
@@ -104,24 +109,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
         onEnded={handleEnded}
         onError={handleError}
         onClick={togglePlay}
-        className="max-w-full max-h-full"
+        className="player-video"
       />
       <div
-        className={`absolute inset-0 transition-opacity duration-300 ${
-          controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
+        className={`player-overlay ${controlsVisible ? "visible" : "hidden"}`}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Top Gradient & Back Button */}
-        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black via-black/60 to-transparent px-8 pt-6 pb-20">
-          <button
-            onClick={onBack}
-            className="text-white hover:bg-white/10 transition-colors p-2 rounded-full flex items-center gap-2 group/back"
-            aria-label="Go back"
-          >
+        <div className="player-top-bar">
+          <button onClick={onBack} className="back-button" aria-label="Go back">
             <BackIcon />
-            <span className="text-sm font-medium opacity-0 group-hover/back:opacity-100 transition-opacity">
-              Back
-            </span>
+            <span className="back-button-text">Back</span>
           </button>
         </div>
         <PlayerControls

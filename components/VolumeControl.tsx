@@ -31,15 +31,15 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
   };
 
   return (
-    <div className="flex items-center group/volume relative">
+    <div className="volume-control">
       <button
         onClick={onToggleMute}
-        className="p-2 hover:bg-white/10 rounded-full transition-colors"
+        className="control-btn"
         aria-label={isMuted ? "Unmute" : "Mute"}
       >
         {getVolumeIcon()}
       </button>
-      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-10 h-32 p-2 bg-black/90 backdrop-blur-md rounded-lg opacity-0 group-hover/volume:opacity-100 transition-opacity pointer-events-none group-hover/volume:pointer-events-auto shadow-xl">
+      <div className="volume-slider-container">
         <input
           type="range"
           min="0"
@@ -47,8 +47,15 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
           step="0.01"
           value={isMuted ? 0 : volume}
           onChange={handleVolumeSliderChange}
-          className="w-32 h-2 appearance-none cursor-pointer origin-center -rotate-90 translate-x-12 translate-y-12 bg-transparent [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gray-600/50 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-lg"
+          className="volume-slider"
           aria-label="Volume"
+          style={{
+            background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${
+              (isMuted ? 0 : volume) * 100
+            }%, rgba(75, 85, 99, 0.5) ${
+              (isMuted ? 0 : volume) * 100
+            }%, rgba(75, 85, 99, 0.5) 100%)`,
+          }}
         />
       </div>
     </div>

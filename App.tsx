@@ -1,8 +1,19 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import VideoPlayer from './components/VideoPlayer';
-import usePlayerState from './hooks/usePlayerState';
-import { BackIcon, PlayIcon, HeartIcon, CommentIcon, ShareIcon, BookmarkIcon, MoreIcon, MusicIcon, NetflixIcon, InstagramIcon } from './components/icons';
-import type { PlayerState } from './hooks/usePlayerState';
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import VideoPlayer from "./components/VideoPlayer";
+import usePlayerState from "./hooks/usePlayerState";
+import {
+  BackIcon,
+  PlayIcon,
+  HeartIcon,
+  CommentIcon,
+  ShareIcon,
+  BookmarkIcon,
+  MoreIcon,
+  MusicIcon,
+  NetflixIcon,
+  InstagramIcon,
+} from "./components/icons";
+import type { PlayerState } from "./hooks/usePlayerState";
 
 // --- Reusable Props Interface ---
 interface VideoPlayerProps {
@@ -12,7 +23,8 @@ interface VideoPlayerProps {
 }
 
 // --- Instagram Reels Style Player Components (defined in-file to avoid new files) ---
-
+// COMMENTED OUT - Instagram Reels Player (for future use)
+/*
 interface InstaControlsProps {
     playerState: PlayerState;
     title: string;
@@ -25,7 +37,7 @@ const InstaControls: React.FC<InstaControlsProps> = ({ playerState, title, onBac
 
   return (
     <div className="absolute inset-0 text-white pointer-events-none flex flex-col justify-between">
-      {/* Top Gradient & Header */}
+      {/* Top Gradient & Header *\/}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/60 to-transparent p-4 flex items-center pointer-events-auto">
         <button onClick={onBack} className="text-white hover:text-gray-300 transition-colors p-2 -ml-2">
           <BackIcon />
@@ -33,12 +45,12 @@ const InstaControls: React.FC<InstaControlsProps> = ({ playerState, title, onBac
         <h2 className="font-bold text-lg ml-2">Streamline Player</h2>
       </div>
 
-      {/* Main Content Area */}
+      {/* Main Content Area *\/}
       <div className="flex-grow" />
 
-      {/* Side & Bottom Controls */}
+      {/* Side & Bottom Controls *\/}
       <div className="flex items-end p-4">
-        {/* Left Info */}
+        {/* Left Info *\/}
         <div className="flex-grow">
           <h3 className="font-bold text-lg">@streamline_user</h3>
           <p className="text-sm mt-1">{title}</p>
@@ -47,7 +59,7 @@ const InstaControls: React.FC<InstaControlsProps> = ({ playerState, title, onBac
             <p className="text-sm ml-2 font-semibold">Original Audio - streamline_user</p>
           </div>
         </div>
-        {/* Right Icons */}
+        {/* Right Icons *\/}
         <div className="flex flex-col gap-4 items-center pointer-events-auto">
             <button className="flex flex-col items-center gap-1"><HeartIcon /> <span className="text-xs font-semibold">1.2M</span></button>
             <button className="flex flex-col items-center gap-1"><CommentIcon /> <span className="text-xs font-semibold">5,321</span></button>
@@ -57,7 +69,7 @@ const InstaControls: React.FC<InstaControlsProps> = ({ playerState, title, onBac
         </div>
       </div>
       
-      {/* Progress Bar */}
+      {/* Progress Bar *\/}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
         <div className="h-full bg-white" style={{ width: `${progressPercent}%` }} />
       </div>
@@ -79,9 +91,9 @@ const InstaPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
 
   if (error) {
       return (
-          <div className="w-full h-screen bg-black flex flex-col items-center justify-center p-4 text-center">
-              <p className="text-red-500 mb-4">{error}</p>
-              <button onClick={onBack} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg">
+          <div style={styles.errorContainer}>
+              <p style={styles.errorText}>{error}</p>
+              <button onClick={onBack} style={styles.errorButton} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b91c1c'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc2626'}>
                   Go Back
               </button>
           </div>
@@ -120,50 +132,251 @@ const InstaPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
     </div>
   );
 };
-
+*/
 
 // --- Main App Component ---
 
+// Inline styles to replace Tailwind CSS
+const styles = {
+  errorContainer: {
+    width: "100%",
+    height: "100vh",
+    backgroundColor: "#000000",
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "1rem",
+    textAlign: "center" as const,
+  },
+  errorText: {
+    color: "#ef4444",
+    marginBottom: "1rem",
+  },
+  errorButton: {
+    padding: "0.5rem 1rem",
+    backgroundColor: "#dc2626",
+    color: "#ffffff",
+    fontWeight: 600,
+    borderRadius: "0.5rem",
+    border: "none",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+  },
+  mainContainer: {
+    minHeight: "100vh",
+    backgroundColor: "#111827",
+    color: "#ffffff",
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "1rem",
+  },
+  contentWrapper: {
+    width: "100%",
+    maxWidth: "42rem",
+    textAlign: "center" as const,
+  },
+  contentWrapperWide: {
+    width: "100%",
+    maxWidth: "56rem",
+    textAlign: "center" as const,
+  },
+  backButton: {
+    position: "absolute" as const,
+    top: "1rem",
+    left: "1rem",
+    color: "#ffffff",
+    backgroundColor: "transparent",
+    border: "none",
+    cursor: "pointer",
+    padding: "0.5rem",
+    borderRadius: "9999px",
+    transition: "color 0.2s",
+  },
+  iconContainer: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "1rem",
+    marginBottom: "1rem",
+  },
+  title: {
+    fontSize: "2.25rem",
+    fontWeight: 700,
+    marginBottom: "0.5rem",
+  },
+  titleLarge: {
+    fontSize: "3rem",
+    fontWeight: 700,
+    marginBottom: "0.5rem",
+  },
+  subtitle: {
+    fontSize: "1.125rem",
+    color: "#9ca3af",
+    marginBottom: "3rem",
+  },
+  formContainer: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "2rem",
+  },
+  uploadLabel: {
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "1rem 2rem",
+    backgroundColor: "#dc2626",
+    color: "#ffffff",
+    fontWeight: 600,
+    borderRadius: "0.5rem",
+    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+    transition: "all 0.2s",
+    border: "none",
+  },
+  uploadIcon: {
+    width: "1.5rem",
+    height: "1.5rem",
+    marginRight: "0.75rem",
+  },
+  helpText: {
+    color: "#6b7280",
+    marginTop: "0.5rem",
+    fontSize: "0.875rem",
+  },
+  dividerContainer: {
+    position: "relative" as const,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dividerLine: {
+    flexGrow: 1,
+    borderTop: "1px solid #374151",
+  },
+  dividerText: {
+    padding: "0 1rem",
+    color: "#6b7280",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: "1rem",
+  },
+  formRow: {
+    display: "flex",
+    flexDirection: "row" as const,
+    gap: "1rem",
+  },
+  input: {
+    flexGrow: 1,
+    backgroundColor: "#1f2937",
+    color: "#ffffff",
+    padding: "0.75rem 1rem",
+    borderRadius: "0.5rem",
+    border: "2px solid #374151",
+    outline: "none",
+    transition: "border-color 0.2s",
+  },
+  submitButton: {
+    padding: "0.75rem 2rem",
+    backgroundColor: "#4b5563",
+    color: "#ffffff",
+    fontWeight: 600,
+    borderRadius: "0.5rem",
+    border: "none",
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  modeButton: {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "2rem",
+    backgroundColor: "rgba(31, 41, 55, 0.5)",
+    borderRadius: "1rem",
+    border: "2px solid #374151",
+    transition: "all 0.3s",
+    cursor: "pointer",
+    maxWidth: "28rem",
+  },
+  modeTitle: {
+    fontSize: "1.5rem",
+    fontWeight: 700,
+    marginTop: "1.5rem",
+  },
+  modeDescription: {
+    color: "#9ca3af",
+    marginTop: "0.5rem",
+  },
+  demoButton: {
+    padding: "0.75rem 1.5rem",
+    backgroundColor: "#059669",
+    color: "#ffffff",
+    fontWeight: 600,
+    borderRadius: "0.5rem",
+    border: "none",
+    cursor: "pointer",
+    transition: "all 0.2s",
+  },
+  demoContainer: {
+    marginTop: "3rem",
+  },
+  modeContainer: {
+    display: "flex",
+    justifyContent: "center",
+  },
+};
+
 const App: React.FC = () => {
-  const [playerMode, setPlayerMode] = useState<'netflix' | 'insta' | null>(null);
+  const [playerMode, setPlayerMode] = useState<"netflix" | "insta" | null>(
+    null
+  );
   const [videoSource, setVideoSource] = useState<string | null>(null);
-  const [videoTitle, setVideoTitle] = useState<string>('');
-  const [initialUrl, setInitialUrl] = useState<string>('');
+  const [videoTitle, setVideoTitle] = useState<string>("");
+  const [initialUrl, setInitialUrl] = useState<string>("");
   const urlInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const src = params.get('src');
-    const mode = params.get('mode');
-    const pageUrl = params.get('pageUrl');
+    const src = params.get("src");
+    const mode = params.get("mode");
+    const pageUrl = params.get("pageUrl");
 
-    if (src && (mode === 'netflix' || mode === 'insta')) {
+    // Only support netflix mode for now
+    if (src && mode === "netflix") {
       setVideoSource(src);
       setPlayerMode(mode);
       try {
         const urlObject = new URL(src);
-        const pathParts = urlObject.pathname.split('/');
-        setVideoTitle(pathParts[pathParts.length - 1] || 'Remote Video');
+        const pathParts = urlObject.pathname.split("/");
+        setVideoTitle(pathParts[pathParts.length - 1] || "Remote Video");
       } catch (error) {
-        setVideoTitle('Remote Video');
+        setVideoTitle("Remote Video");
       }
-    } else if (mode === 'netflix' || mode === 'insta') {
-        setPlayerMode(mode);
-        if (pageUrl) {
-            setInitialUrl(pageUrl);
-        }
+    } else if (mode === "netflix") {
+      setPlayerMode(mode);
+      if (pageUrl) {
+        setInitialUrl(pageUrl);
+      }
     }
   }, []);
 
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setVideoSource(url);
-      setVideoTitle(file.name);
-    }
-  }, []);
+  const handleFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        setVideoSource(url);
+        setVideoTitle(file.name);
+      }
+    },
+    []
+  );
 
   const handleUrlSubmit = useCallback((event: React.FormEvent) => {
     event.preventDefault();
@@ -172,119 +385,242 @@ const App: React.FC = () => {
       setVideoSource(url);
       try {
         const urlObject = new URL(url);
-        const pathParts = urlObject.pathname.split('/');
-        setVideoTitle(pathParts[pathParts.length - 1] || 'Remote Video');
+        const pathParts = urlObject.pathname.split("/");
+        setVideoTitle(pathParts[pathParts.length - 1] || "Remote Video");
       } catch (error) {
-        setVideoTitle('Remote Video');
+        setVideoTitle("Remote Video");
       }
     }
   }, []);
-  
+
   const resetVideoSource = useCallback(() => {
-    if (videoSource?.startsWith('blob:')) {
+    if (videoSource?.startsWith("blob:")) {
       URL.revokeObjectURL(videoSource);
     }
     setVideoSource(null);
-    setVideoTitle('');
+    setVideoTitle("");
     setPlayerMode(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = "";
     // Use history.pushState to clean the URL without reloading the page
-    window.history.pushState({}, '', window.location.pathname);
+    window.history.pushState({}, "", window.location.pathname);
   }, [videoSource]);
 
   const handlePlayDemo = () => {
-    setPlayerMode('netflix');
-    setVideoSource('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4');
-    setVideoTitle('Big Buck Bunny (Demo)');
+    setPlayerMode("netflix");
+    setVideoSource(
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+    );
+    setVideoTitle("Big Buck Bunny (Demo)");
   };
 
   const renderPlayer = () => {
     if (!videoSource || !playerMode) return null;
 
-    if (playerMode === 'netflix') {
-      return <VideoPlayer key={videoSource} src={videoSource} title={videoTitle} onBack={resetVideoSource} />;
+    if (playerMode === "netflix") {
+      return (
+        <VideoPlayer
+          key={videoSource}
+          src={videoSource}
+          title={videoTitle}
+          onBack={resetVideoSource}
+        />
+      );
     }
-    if (playerMode === 'insta') {
-        return <InstaPlayer key={videoSource} src={videoSource} title={videoTitle} onBack={resetVideoSource} />;
-    }
+    // Instagram Reels player commented out for now
+    // if (playerMode === 'insta') {
+    //     return <InstaPlayer key={videoSource} src={videoSource} title={videoTitle} onBack={resetVideoSource} />;
+    // }
     return null;
   };
 
   const renderSourceSelector = () => (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-2xl text-center">
-        <button onClick={() => setPlayerMode(null)} className="absolute top-4 left-4 text-white hover:text-red-500 transition-colors p-2 rounded-full">
-            <BackIcon />
+    <div style={styles.mainContainer}>
+      <div style={styles.contentWrapper}>
+        <button
+          onClick={() => setPlayerMode(null)}
+          style={styles.backButton}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
+        >
+          <BackIcon />
         </button>
-        <div className="flex items-center justify-center gap-4 mb-4">
-            {playerMode === 'netflix' ? <NetflixIcon size={48} /> : <InstagramIcon size={48} />}
-            <h1 className="text-4xl md:text-5xl font-bold">
-                {playerMode === 'netflix' ? 'Netflix Player' : 'Instagram Player'}
-            </h1>
+        <div style={styles.iconContainer}>
+          {playerMode === "netflix" ? (
+            <NetflixIcon size={48} />
+          ) : (
+            <InstagramIcon size={48} />
+          )}
+          <h1
+            style={{
+              ...styles.title,
+              fontSize: window.innerWidth >= 768 ? "3rem" : "2.25rem",
+            }}
+          >
+            {playerMode === "netflix" ? "Netflix Player" : "Instagram Player"}
+          </h1>
         </div>
-        <p className="text-lg md:text-xl text-gray-400 mb-12">Select a local file or enter a direct video URL.</p>
+        <p
+          style={{
+            ...styles.subtitle,
+            fontSize: window.innerWidth >= 768 ? "1.25rem" : "1.125rem",
+          }}
+        >
+          Select a local file or enter a direct video URL.
+        </p>
 
-        <div className="space-y-8">
+        <div style={styles.formContainer}>
           <div>
-            <label htmlFor="file-upload" className="cursor-pointer inline-flex items-center justify-center px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition-transform transform hover:scale-105">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+            <label
+              htmlFor="file-upload"
+              style={styles.uploadLabel}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#b91c1c";
+                e.currentTarget.style.transform = "scale(1.05)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#dc2626";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                style={styles.uploadIcon}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
+              </svg>
               Play Local Video File
             </label>
-            <input ref={fileInputRef} id="file-upload" type="file" className="hidden" accept="video/*" onChange={handleFileChange} />
-            <p className="text-gray-500 mt-2 text-sm">MP4, WebM, OGG, MOV, etc.</p>
+            <input
+              ref={fileInputRef}
+              id="file-upload"
+              type="file"
+              style={{ display: "none" }}
+              accept="video/*"
+              onChange={handleFileChange}
+            />
+            <p style={styles.helpText}>MP4, WebM, OGG, MOV, etc.</p>
           </div>
 
-          <div className="relative flex items-center justify-center">
-            <span className="flex-grow border-t border-gray-700"></span>
-            <span className="px-4 text-gray-500">OR</span>
-            <span className="flex-grow border-t border-gray-700"></span>
+          <div style={styles.dividerContainer}>
+            <span style={styles.dividerLine}></span>
+            <span style={styles.dividerText}>OR</span>
+            <span style={styles.dividerLine}></span>
           </div>
-          
-          <form onSubmit={handleUrlSubmit} className="flex flex-col sm:flex-row gap-4">
-            <input 
+
+          <form
+            onSubmit={handleUrlSubmit}
+            style={{
+              ...styles.form,
+              flexDirection: window.innerWidth >= 640 ? "row" : "column",
+            }}
+          >
+            <input
               ref={urlInputRef}
-              type="url" 
+              type="url"
               placeholder="Paste a direct video URL..."
               defaultValue={initialUrl}
-              className="flex-grow bg-gray-800 text-white placeholder-gray-500 px-4 py-3 rounded-lg border-2 border-gray-700 focus:border-red-500 focus:ring-red-500 focus:outline-none transition" 
+              style={styles.input}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#dc2626")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "#374151")}
               required
             />
-            <button type="submit" className="px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-transform transform hover:scale-105">
+            <button
+              type="submit"
+              style={styles.submitButton}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#374151";
+                e.currentTarget.style.transform = "scale(1.05)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#4b5563";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
               Play from URL
             </button>
           </form>
-           <p className="text-gray-500 mt-2 text-sm">
-              Note: Only direct video file URLs (e.g., .mp4) are supported.
-              <br />
-              Links from pages like YouTube or Vimeo will not work.
-            </p>
+          <p style={styles.helpText}>
+            Note: Only direct video file URLs (e.g., .mp4) are supported.
+            <br />
+            Links from pages like YouTube or Vimeo will not work.
+          </p>
         </div>
       </div>
     </div>
   );
 
   const renderModeSelector = () => (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-4xl text-center">
-        <h1 className="text-4xl md:text-6xl font-bold mb-2">Streamline Player</h1>
-        <p className="text-lg md:text-xl text-gray-400 mb-12">Choose your viewing experience.</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <button onClick={() => setPlayerMode('netflix')} className="group flex flex-col items-center justify-center p-8 bg-gray-800/50 hover:bg-gray-800 rounded-2xl border-2 border-gray-700 hover:border-red-500 transition-all duration-300 transform hover:scale-105">
-                <NetflixIcon size={80} />
-                <h2 className="text-2xl font-bold mt-6">Netflix Player</h2>
-                <p className="text-gray-400 mt-2">Cinematic, widescreen experience.</p>
-            </button>
-            <button onClick={() => setPlayerMode('insta')} className="group flex flex-col items-center justify-center p-8 bg-gray-800/50 hover:bg-gray-800 rounded-2xl border-2 border-gray-700 hover:pink-500 transition-all duration-300 transform hover:scale-105">
+    <div style={styles.mainContainer}>
+      <div style={styles.contentWrapperWide}>
+        <h1
+          style={{
+            ...styles.titleLarge,
+            fontSize: window.innerWidth >= 768 ? "3.75rem" : "2.25rem",
+            marginBottom: "0.5rem",
+          }}
+        >
+          Streamline Player
+        </h1>
+        <p
+          style={{
+            ...styles.subtitle,
+            fontSize: window.innerWidth >= 768 ? "1.25rem" : "1.125rem",
+          }}
+        >
+          Choose your viewing experience.
+        </p>
+        <div style={styles.modeContainer}>
+          <button
+            onClick={() => setPlayerMode("netflix")}
+            style={styles.modeButton}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#1f2937";
+              e.currentTarget.style.borderColor = "#dc2626";
+              e.currentTarget.style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "rgba(31, 41, 55, 0.5)";
+              e.currentTarget.style.borderColor = "#374151";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          >
+            <NetflixIcon size={80} />
+            <h2 style={styles.modeTitle}>Netflix Player</h2>
+            <p style={styles.modeDescription}>
+              Cinematic, widescreen experience.
+            </p>
+          </button>
+          {/* Instagram Reels Player - Coming Soon */}
+          {/* <button onClick={() => setPlayerMode('insta')} style={styles.modeButton}>
                 <InstagramIcon size={80} />
-                <h2 className="text-2xl font-bold mt-6">Reels Player</h2>
-                <p className="text-gray-400 mt-2">Vertical, short-form experience.</p>
-            </button>
+                <h2 style={styles.modeTitle}>Reels Player</h2>
+                <p style={styles.modeDescription}>Vertical, short-form experience.</p>
+            </button> */}
         </div>
-        <div className="mt-12">
-           <button onClick={handlePlayDemo} className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-transform transform hover:scale-105">
-              Play Demo Video
-            </button>
-            <p className="text-gray-500 mt-2 text-sm">Having trouble? Play a sample video.</p>
+        <div style={styles.demoContainer}>
+          <button
+            onClick={handlePlayDemo}
+            style={styles.demoButton}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#047857";
+              e.currentTarget.style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#059669";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+          >
+            Play Demo Video
+          </button>
+          <p style={styles.helpText}>Having trouble? Play a sample video.</p>
         </div>
       </div>
     </div>

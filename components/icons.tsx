@@ -2,7 +2,7 @@ import React from "react";
 
 const Icon: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
-  className = "h-6 w-6",
+  className = "icon-size-base",
 }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -109,7 +109,7 @@ export const MoreIcon: React.FC = () => (
   </Icon>
 );
 export const MusicIcon: React.FC = () => (
-  <Icon className="w-5 h-5">
+  <Icon className="icon-size-small">
     <path
       strokeLinecap="round"
       strokeLinejoin="round"

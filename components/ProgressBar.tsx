@@ -78,22 +78,22 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       ref={progressBarRef}
       onClick={handleSeek}
       onMouseDown={handleMouseDown}
-      className="w-full h-1 bg-gray-600/40 cursor-pointer group/progress relative rounded-full overflow-hidden hover:h-1.5 transition-all"
+      className="progress-bar-container"
     >
-      <div className="relative h-full">
+      <div className="progress-bar-inner">
         {/* Buffered progress */}
         <div
-          className="absolute h-full bg-gray-400/30 rounded-full"
+          className="progress-buffered"
           style={{ width: `${bufferedPercent}%` }}
         />
         {/* Watched progress */}
         <div
-          className="absolute h-full bg-red-600 rounded-full"
+          className="progress-watched"
           style={{ width: `${progressPercent}%` }}
         />
         {/* Scrubber handle */}
         <div
-          className="absolute h-3 w-3 bg-red-600 rounded-full top-1/2 -translate-y-1/2 -translate-x-1/2 opacity-0 group-hover/progress:opacity-100 transition-opacity shadow-lg"
+          className="progress-scrubber"
           style={{ left: `${progressPercent}%` }}
         />
       </div>

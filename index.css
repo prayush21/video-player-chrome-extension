@@ -820,6 +820,104 @@ button:hover .group-hover\/back\:opacity-100 {
   background-image: url('/icons/arrow_back_40dp_E3E3E3_FILL0_wght400_GRAD0_opsz40.svg');
 }
 
+/* Volume Control Styles */
+.volume-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.volume-slider-container {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 180px;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.volume-control:hover .volume-slider-container {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.volume-slider-container:hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.volume-slider {
+  width: 148px;
+  height: 6px;
+  appearance: none;
+  cursor: pointer;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  background-color: transparent;
+  outline: none;
+  border-radius: 3px;
+}
+
+/* Webkit slider track */
+.volume-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+}
+
+/* Webkit slider thumb */
+.volume-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s ease;
+  margin-top: -4px;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* Firefox slider track */
+.volume-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(75, 85, 99, 0.5);
+}
+
+/* Firefox slider thumb */
+.volume-slider::-moz-range-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background-color: #ef4444;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s ease;
+  margin-top: -4px;
+}
+
+.volume-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+}
+
 /* Player Controls Styles */
 .controls-container {
   position: absolute;
@@ -900,3 +998,171 @@ button:hover .group-hover\/back\:opacity-100 {
   text-overflow: ellipsis;
   max-width: 28rem;
 }
+
+/* Video Player Specific Styles */
+.player-container {
+  width: 100%;
+  height: 100vh;
+  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.player-video {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.player-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transition: opacity 0.3s ease;
+}
+
+.player-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.player-overlay.visible {
+  opacity: 1;
+}
+
+.player-top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* background: linear-gradient(to bottom, #000000, rgba(0, 0, 0, 0.6), transparent); */
+  padding: 1.5rem 2rem 5rem 2rem;
+}
+
+.back-button {
+  color: #ffffff;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease;
+}
+
+.back-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.back-button-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.back-button:hover .back-button-text {
+  opacity: 1;
+}
+
+/* Error Screen Styles */
+.error-container {
+  width: 100%;
+  height: 100vh;
+  background-color: #000000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  text-align: center;
+}
+
+.error-message {
+  color: #ef4444;
+  margin-bottom: 1rem;
+}
+
+.error-button {
+  padding: 0.5rem 1rem;
+  background-color: #dc2626;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.error-button:hover {
+  background-color: #b91c1c;
+}
+
+/* Progress Bar Styles */
+.progress-bar-container {
+  width: 100%;
+  height: 0.25rem;
+  background-color: rgba(75, 85, 99, 0.4);
+  cursor: pointer;
+  position: relative;
+  border-radius: 9999px;
+  overflow: hidden;
+  transition: height 0.2s ease;
+}
+
+.progress-bar-container:hover {
+  height: 0.375rem;
+}
+
+.progress-bar-inner {
+  position: relative;
+  height: 100%;
+}
+
+.progress-buffered {
+  position: absolute;
+  height: 100%;
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 9999px;
+}
+
+.progress-watched {
+  position: absolute;
+  height: 100%;
+  background-color: #dc2626;
+  border-radius: 9999px;
+}
+
+.progress-scrubber {
+  position: absolute;
+  height: 0.75rem;
+  width: 0.75rem;
+  background-color: #dc2626;
+  border-radius: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.progress-bar-container:hover .progress-scrubber {
+  opacity: 1;
+}
+
+/* Icon sizing utilities */
+.icon-size-base {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+.icon-size-small {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
