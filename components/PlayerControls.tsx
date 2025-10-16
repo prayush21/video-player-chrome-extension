@@ -13,6 +13,13 @@ import {
   PipExitIcon,
   Replay10Icon,
   Forward10Icon,
+  SubtitlesIcon2,
+  MaximiseIcon,
+  MinimiseIcon,
+  Forward10Icon2,
+  Replay10Icon2,
+  PauseIcon2,
+  PlayIcon2,
 } from "./icons";
 
 interface PlayerControlsProps {
@@ -64,13 +71,22 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   return (
     <div className="controls-container">
       {/* Progress Bar */}
-      <div style={{ marginBottom: "1rem" }}>
-        <ProgressBar
-          progress={progress}
-          duration={duration}
-          buffered={buffered}
-          onSeek={handleSeek}
-        />
+      <div
+        style={{ marginBottom: "1rem", display: "flex", alignItems: "center" }}
+      >
+        <div style={{ flex: 1 }}>
+          <ProgressBar
+            progress={progress}
+            duration={duration}
+            buffered={buffered}
+            onSeek={handleSeek}
+          />
+        </div>
+        <div className="time-display" style={{ marginLeft: "1rem" }}>
+          <span className="time-remaining">
+            {formatTime(duration - progress)}
+          </span>
+        </div>
       </div>
 
       {/* Controls Row */}
@@ -82,21 +98,21 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             className="control-btn"
             aria-label={isPlaying ? "Pause" : "Play"}
           >
-            {isPlaying ? <PauseIcon /> : <PlayIcon />}
+            {isPlaying ? <PauseIcon2 /> : <PlayIcon2 />}
           </button>
           <button
             onClick={seekBackward}
             className="control-btn"
             aria-label="Rewind 10 seconds"
           >
-            <Replay10Icon />
+            <Replay10Icon2 />
           </button>
           <button
             onClick={seekForward}
             className="control-btn"
             aria-label="Forward 10 seconds"
           >
-            <Forward10Icon />
+            <Forward10Icon2 />
           </button>
           <button
             className="control-btn"
@@ -111,11 +127,6 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             onVolumeChange={handleVolumeChange}
             onToggleMute={toggleMute}
           />
-          <div className="time-display">
-            <span className="time-current">{formatTime(progress)}</span>
-            <span className="time-separator">/</span>
-            <span className="time-duration">{formatTime(duration)}</span>
-          </div>
         </div>
 
         {/* Center - Title */}
@@ -130,7 +141,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             aria-label="Subtitles and audio"
             title="Subtitles and audio"
           >
-            <SubtitlesIcon />
+            <SubtitlesIcon2 />
           </button>
           <SettingsMenu
             currentRate={playbackRate}
@@ -150,7 +161,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             className="control-btn"
             aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
           >
-            {isFullscreen ? <FullscreenExitIcon /> : <FullscreenEnterIcon />}
+            {isFullscreen ? <MinimiseIcon /> : <MaximiseIcon />}
           </button>
         </div>
       </div>

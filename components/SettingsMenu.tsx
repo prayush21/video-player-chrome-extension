@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { SettingsIcon } from "./icons";
+import { SettingsIcon, SpeedIcon } from "./icons";
 
 interface SettingsMenuProps {
   currentRate: number;
@@ -87,7 +87,8 @@ const SettingsMenu: React.FC<SettingsMenuProps> = ({
           e.currentTarget.style.background = "transparent";
         }}
       >
-        <SettingsIcon />
+        {/* <SettingsIcon /> */}
+        <SpeedIcon size={20} />
       </button>
 
       {/* Slider popup */}

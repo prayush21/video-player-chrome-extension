@@ -4,6 +4,10 @@ import {
   VolumeLowIcon,
   VolumeMediumIcon,
   VolumeHighIcon,
+  VolumeLowIcon2,
+  VolumeMediumIcon2,
+  VolumeHighIcon2,
+  VolumeMuteIcon2,
 } from "./icons";
 
 interface VolumeControlProps {
@@ -20,10 +24,10 @@ const VolumeControl: React.FC<VolumeControlProps> = ({
   onToggleMute,
 }) => {
   const getVolumeIcon = () => {
-    if (isMuted || volume === 0) return <VolumeMuteIcon />;
-    if (volume < 0.33) return <VolumeLowIcon />;
-    if (volume < 0.66) return <VolumeMediumIcon />;
-    return <VolumeHighIcon />;
+    if (isMuted || volume === 0) return <VolumeMuteIcon2 />;
+    if (volume < 0.33) return <VolumeLowIcon2 />;
+    if (volume < 0.66) return <VolumeMediumIcon2 />;
+    return <VolumeHighIcon2 />;
   };
 
   const handleVolumeSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {

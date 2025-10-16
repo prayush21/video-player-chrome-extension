@@ -1,7 +1,6 @@
 import React, { useRef, useState, useCallback, useEffect } from "react";
 import usePlayerState from "../hooks/usePlayerState";
-import PlayerControls from "./PlayerControls";
-import { BackIcon } from "./icons";
+import PlayerOverlays from "./PlayerOverlays";
 
 interface VideoPlayerProps {
   src: string;
@@ -13,6 +12,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<number | null>(null);
+  const pauseTimerRef = useRef<number | null>(null);
   const [error, setError] = useState<string>("");
 
   const {
@@ -31,6 +31,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
   } = usePlayerState(videoRef, playerContainerRef);
 
   const [controlsVisible, setControlsVisible] = useState(true);
+  const [infoOverlayVisible, setInfoOverlayVisible] = useState(true);
+  const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
 
   const hideControls = useCallback(() => {
     if (playerState.isPlaying) {
@@ -75,6 +77,44 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerState.isPlaying]);
 
+  // Handle info overlay visibility
+  useEffect(() => {
+    // Clear any existing pause timer
+    if (pauseTimerRef.current) {
+      clearTimeout(pauseTimerRef.current);
+      pauseTimerRef.current = null;
+    }
+
+    if (playerState.isPlaying) {
+      // Hide info overlay when playing
+      if (hasStartedPlaying) {
+        setInfoOverlayVisible(false);
+      } else {
+        // First play - hide overlay and mark as started
+        setHasStartedPlaying(true);
+        setInfoOverlayVisible(false);
+      }
+    } else {
+      // Video is paused
+      if (hasStartedPlaying && playerState.progress > 0) {
+        // Start 30 second timer to show info overlay
+        pauseTimerRef.current = window.setTimeout(() => {
+          setInfoOverlayVisible(true);
+        }, 5000); // 5 seconds
+      }
+      // If video hasn't started playing yet, keep overlay visible
+      if (!hasStartedPlaying) {
+        setInfoOverlayVisible(true);
+      }
+    }
+
+    return () => {
+      if (pauseTimerRef.current) {
+        clearTimeout(pauseTimerRef.current);
+      }
+    };
+  }, [playerState.isPlaying, hasStartedPlaying, playerState.progress]);
+
   if (error) {
     return (
       <div className="error-container">
@@ -111,29 +151,22 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
         onClick={togglePlay}
         className="player-video"
       />
-      <div
-        className={`player-overlay ${controlsVisible ? "visible" : "hidden"}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Top Gradient & Back Button */}
-        <div className="player-top-bar">
-          <button onClick={onBack} className="back-button" aria-label="Go back">
-            <BackIcon />
-            <span className="back-button-text">Back</span>
-          </button>
-        </div>
-        <PlayerControls
-          playerState={playerState}
-          togglePlay={togglePlay}
-          handleSeek={handleSeek}
-          handleVolumeChange={handleVolumeChange}
-          toggleMute={toggleMute}
-          handlePlaybackRateChange={handlePlaybackRateChange}
-          toggleFullscreen={toggleFullscreen}
-          togglePip={togglePip}
-          title={title}
-        />
-      </div>
+
+      {/* All Player Overlays (Info, Top Bar, Controls) */}
+      <PlayerOverlays
+        title={title}
+        playerState={playerState}
+        controlsVisible={controlsVisible}
+        infoOverlayVisible={infoOverlayVisible}
+        onBack={onBack}
+        togglePlay={togglePlay}
+        handleSeek={handleSeek}
+        handleVolumeChange={handleVolumeChange}
+        toggleMute={toggleMute}
+        handlePlaybackRateChange={handlePlaybackRateChange}
+        toggleFullscreen={toggleFullscreen}
+        togglePip={togglePip}
+      />
     </div>
   );
 };

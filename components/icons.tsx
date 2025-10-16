@@ -216,3 +216,257 @@ export const InstagramIcon: React.FC<{ size?: number }> = ({ size = 24 }) => (
     </defs>
   </svg>
 );
+
+export const SpeedIcon: React.FC<{ size?: number }> = ({ size = 24 }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="InternetSpeedMedium"
+    data-icon-id=":r6m:"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="white"
+      fill-rule="evenodd"
+      d="M19.06 6.27a9.7 9.7 0 0 0-14.12 0 10.8 10.8 0 0 0 0 14.82L3.5 22.47a12.8 12.8 0 0 1 0-17.59 11.7 11.7 0 0 1 17 0 12.8 12.8 0 0 1 0 17.59l-1.44-1.38a10.8 10.8 0 0 0 0-14.82M15 14a3 3 0 1 1-1.7-2.7l3-3 1.4 1.4-3 3q.3.6.3 1.3"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const SubtitlesIcon2: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="SubtitlesMedium"
+    data-icon-id=":rce:"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="white"
+      fill-rule="evenodd"
+      d="M1 3a1 1 0 0 1 1-1h20a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3v3a1 1 0 0 1-1.55.83L11.7 18H2a1 1 0 0 1-1-1zm2 1v12h9.3l.25.17L17 19.13V16h4V4zm7 5H5V7h5zm9 2h-5v2h5zm-7 2H5v-2h7zm7-6h-7v2h7z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const MaximiseIcon: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="FullscreenEnterMedium"
+    data-icon-id=":r12e:"
+    aria-hidden="true"
+    data-uia="control-fullscreen-enter"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="white"
+      fill-rule="evenodd"
+      d="M0 5c0-1.1.9-2 2-2h7v2H2v4H0zm22 0h-7V3h7a2 2 0 0 1 2 2v4h-2zM2 15v4h7v2H2a2 2 0 0 1-2-2v-4zm20 4v-4h2v4a2 2 0 0 1-2 2h-7v-2z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const MinimiseIcon: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="FullscreenExitMedium"
+    data-icon-id=":r135:"
+    aria-hidden="true"
+    data-uia="control-fullscreen-exit"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      d="M24 8h-5V3h-2v7h7zM0 16h5v5h2v-7H0zm7-6H0V8h5V3h2zm12 11v-5h5v-2h-7v7z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const VolumeLowIcon2: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="VolumeLowMedium"
+    data-icon-id=":r146:"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      d="M11 4a1 1 0 0 0-1.7-.7L4.58 8H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.59l4.7 4.7A1 1 0 0 0 11 20zM5.7 9.7 9 6.42V17.6l-3.3-3.3-.29-.29H2v-4h3.41zM16 12a6 6 0 0 0-1.76-4.24l-1.41 1.41a4 4 0 0 1 0 5.66l1.41 1.41A6 6 0 0 0 16 12"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const VolumeMediumIcon2: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="VolumeMediumMedium"
+    data-icon-id=":r14n:"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      d="M11 4a1 1 0 0 0-1.7-.7L4.58 8H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.59l4.7 4.7A1 1 0 0 0 11 20zM5.7 9.7 9 6.42V17.6l-3.3-3.3-.29-.29H2v-4h3.41zm11.37-4.77a10 10 0 0 1 0 14.14l-1.41-1.41a8 8 0 0 0 0-11.32zm-2.83 2.83a6 6 0 0 1 0 8.48l-1.41-1.41a4 4 0 0 0 0-5.66z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const VolumeHighIcon2: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="VolumeHighMedium"
+    data-icon-id=":r15k:"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      d="M24 12a14 14 0 0 0-4.1-9.9l-1.41 1.41a12 12 0 0 1 0 16.98l1.41 1.41A14 14 0 0 0 24 12M11 4a1 1 0 0 0-1.7-.7L4.58 8H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.59l4.7 4.7A1 1 0 0 0 11 20zM5.7 9.7 9 6.42V17.6l-3.3-3.3-.29-.29H2v-4h3.41zM16 12a6 6 0 0 0-1.76-4.24l-1.41 1.41a4 4 0 0 1 0 5.66l1.41 1.41A6 6 0 0 0 16 12m1.07-7.07a10 10 0 0 1 0 14.14l-1.41-1.41a8 8 0 0 0 0-11.32z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const VolumeMuteIcon2: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="VolumeOffMedium"
+    data-icon-id=":r16i:"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      d="M11 4a1 1 0 0 0-1.7-.7L4.58 8H1a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3.59l4.7 4.7A1 1 0 0 0 11 20zM5.7 9.7 9 6.42V17.6l-3.3-3.3-.29-.29H2v-4h3.41zm9.6 0 2.29 2.3-2.3 2.3 1.42 1.4L19 13.42l2.3 2.3 1.4-1.42-2.28-2.3 2.3-2.3-1.42-1.4-2.3 2.28-2.3-2.3z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const Forward10Icon2: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="Forward10Medium"
+    data-icon-id=":r160:"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      d="M6.44 3.69A10 10 0 0 1 18 4h-2v2h4a1 1 0 0 0 1-1V1h-2v1.25A12 12 0 1 0 24 12h-2A10 10 0 1 1 6.44 3.69M22 4v3h-3v2h4a1 1 0 0 0 1-1V4zm-9.4 11.58q.66.42 1.53.42a2.7 2.7 0 0 0 1.5-.42q.67-.44 1.02-1.22.35-.8.35-1.86 0-1.05-.35-1.85A2.65 2.65 0 0 0 14.13 9a2.7 2.7 0 0 0-1.53.43q-.64.44-1 1.22a4.5 4.5 0 0 0-.35 1.85q0 1.07.35 1.86.36.78 1 1.22m2.44-1.49q-.33.56-.91.56-.6 0-.92-.56-.34-.56-.34-1.59 0-1.01.34-1.58.33-.57.91-.57.6 0 .92.57.34.56.34 1.58t-.34 1.6M8.6 10.72v5.14h1.6V9.02l-3.2.8v1.32z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const Replay10Icon2: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="Back10Medium"
+    data-icon-id=":r16m:"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      d="M11.02 2.05A10 10 0 1 1 2 12H0a12 12 0 1 0 5-9.75V1H3v4a1 1 0 0 0 1 1h4V4H6a10 10 0 0 1 5.02-1.95M2 4v3h3v2H1a1 1 0 0 1-1-1V4zm12.13 12q-.88 0-1.53-.42-.64-.44-1-1.22a5 5 0 0 1-.35-1.86q0-1.05.35-1.85.36-.79 1-1.22A2.7 2.7 0 0 1 14.13 9a2.65 2.65 0 0 1 2.52 1.65q.35.79.35 1.85 0 1.07-.35 1.86a3 3 0 0 1-1.01 1.22 2.7 2.7 0 0 1-1.52.42m0-1.35q.59 0 .91-.56.34-.56.34-1.59 0-1.01-.34-1.58-.33-.57-.91-.57-.6 0-.92.57-.34.56-.34 1.58t.34 1.6q.33.54.91.55m-5.53 1.2v-5.13l-1.6.42V9.82l3.2-.8v6.84z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const PlayIcon2: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="PlayMedium"
+    data-icon-id=":r17u:"
+    aria-hidden="true"
+    class="svg-icon-nfplayerPlay"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="currentColor"
+      d="M5 2.7a1 1 0 0 1 1.48-.88l16.93 9.3a1 1 0 0 1 0 1.76l-16.93 9.3A1 1 0 0 1 5 21.31z"
+    ></path>
+  </svg>
+);
+
+export const PauseIcon2: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    data-icon="PauseMedium"
+    data-icon-id=":r18f:"
+    aria-hidden="true"
+    class="svg-icon-nfplayerPause"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    role="img"
+  >
+    <path
+      fill="currentColor"
+      fill-rule="evenodd"
+      d="M4.5 3a.5.5 0 0 0-.5.5v17c0 .28.22.5.5.5h5a.5.5 0 0 0 .5-.5v-17a.5.5 0 0 0-.5-.5zm10 0a.5.5 0 0 0-.5.5v17c0 .28.22.5.5.5h5a.5.5 0 0 0 .5-.5v-17a.5.5 0 0 0-.5-.5z"
+      clip-rule="evenodd"
+    ></path>
+  </svg>
+);

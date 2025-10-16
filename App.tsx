@@ -1,19 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import VideoPlayer from "./components/VideoPlayer";
-import usePlayerState from "./hooks/usePlayerState";
-import {
-  BackIcon,
-  PlayIcon,
-  HeartIcon,
-  CommentIcon,
-  ShareIcon,
-  BookmarkIcon,
-  MoreIcon,
-  MusicIcon,
-  NetflixIcon,
-  InstagramIcon,
-} from "./components/icons";
-import type { PlayerState } from "./hooks/usePlayerState";
 
 // --- Reusable Props Interface ---
 interface VideoPlayerProps {
@@ -165,7 +151,7 @@ const styles = {
   },
   mainContainer: {
     minHeight: "100vh",
-    backgroundColor: "#111827",
+    backgroundColor: "#000000",
     color: "#ffffff",
     display: "flex",
     flexDirection: "column" as const,
@@ -201,6 +187,11 @@ const styles = {
     justifyContent: "center",
     gap: "1rem",
     marginBottom: "1rem",
+  },
+  logoSmall: {
+    width: "3rem",
+    height: "3rem",
+    objectFit: "contain",
   },
   title: {
     fontSize: "2.25rem",
@@ -308,6 +299,11 @@ const styles = {
     fontWeight: 700,
     marginTop: "1.5rem",
   },
+  logoLarge: {
+    width: "5rem",
+    height: "5rem",
+    objectFit: "contain",
+  },
   modeDescription: {
     color: "#9ca3af",
     marginTop: "0.5rem",
@@ -333,7 +329,7 @@ const styles = {
 
 const App: React.FC = () => {
   const [playerMode, setPlayerMode] = useState<"netflix" | "insta" | null>(
-    null
+    "netflix"
   );
   const [videoSource, setVideoSource] = useState<string | null>(null);
   const [videoTitle, setVideoTitle] = useState<string>("");
@@ -350,7 +346,7 @@ const App: React.FC = () => {
     // Only support netflix mode for now
     if (src && mode === "netflix") {
       setVideoSource(src);
-      setPlayerMode(mode);
+      setPlayerMode("netflix");
       try {
         const urlObject = new URL(src);
         const pathParts = urlObject.pathname.split("/");
@@ -359,7 +355,7 @@ const App: React.FC = () => {
         setVideoTitle("Remote Video");
       }
     } else if (mode === "netflix") {
-      setPlayerMode(mode);
+      setPlayerMode("netflix");
       if (pageUrl) {
         setInitialUrl(pageUrl);
       }
@@ -399,14 +395,12 @@ const App: React.FC = () => {
     }
     setVideoSource(null);
     setVideoTitle("");
-    setPlayerMode(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     // Use history.pushState to clean the URL without reloading the page
     window.history.pushState({}, "", window.location.pathname);
   }, [videoSource]);
 
   const handlePlayDemo = () => {
-    setPlayerMode("netflix");
     setVideoSource(
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
     );
@@ -436,27 +430,19 @@ const App: React.FC = () => {
   const renderSourceSelector = () => (
     <div style={styles.mainContainer}>
       <div style={styles.contentWrapper}>
-        <button
-          onClick={() => setPlayerMode(null)}
-          style={styles.backButton}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#ffffff")}
-        >
-          <BackIcon />
-        </button>
         <div style={styles.iconContainer}>
-          {playerMode === "netflix" ? (
-            <NetflixIcon size={48} />
-          ) : (
-            <InstagramIcon size={48} />
-          )}
+          {/* <img
+            src="/n-player-logo.png"
+            alt="N Player logo"
+            style={styles.logoSmall}
+          /> */}
           <h1
             style={{
               ...styles.title,
               fontSize: window.innerWidth >= 768 ? "3rem" : "2.25rem",
             }}
           >
-            {playerMode === "netflix" ? "Netflix Player" : "Instagram Player"}
+            <span style={{ color: "#B20710" }}>Netflix</span>-like Video Player
           </h1>
         </div>
         <p
@@ -552,6 +538,23 @@ const App: React.FC = () => {
             <br />
             Links from pages like YouTube or Vimeo will not work.
           </p>
+
+          <div style={styles.demoContainer}>
+            <button
+              onClick={handlePlayDemo}
+              style={styles.demoButton}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#047857";
+                e.currentTarget.style.transform = "scale(1.05)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#059669";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              Play Demo Video
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -592,7 +595,11 @@ const App: React.FC = () => {
               e.currentTarget.style.transform = "scale(1)";
             }}
           >
-            <NetflixIcon size={80} />
+            <img
+              src="/n-player-logo.png"
+              alt="N Player logo"
+              style={styles.logoLarge}
+            />
             <h2 style={styles.modeTitle}>Netflix Player</h2>
             <p style={styles.modeDescription}>
               Cinematic, widescreen experience.
@@ -627,8 +634,7 @@ const App: React.FC = () => {
   );
 
   if (videoSource) return renderPlayer();
-  if (playerMode) return renderSourceSelector();
-  return renderModeSelector();
+  return renderSourceSelector();
 };
 
 export default App;
