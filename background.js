@@ -10,13 +10,8 @@ function findFirstVideoSource() {
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
-    id: "play-with-streamline-netflix",
-    title: "Play with Streamline Player (Netflix)",
-    contexts: ["video", "link", "page"],
-  });
-  chrome.contextMenus.create({
-    id: "play-with-streamline-insta",
-    title: "Play with Streamline Player (Reels)",
+    id: "play-with-streamline",
+    title: "Play with Streamline Player",
     contexts: ["video", "link", "page"],
   });
 });
@@ -36,7 +31,6 @@ const openPlayerTab = (src, mode, fallbackUrl = "") => {
 
 // Handle clicks on the extension icon
 chrome.action.onClicked.addListener((tab) => {
-  // Open player with Netflix mode by default when clicking the icon
   chrome.scripting.executeScript(
     {
       target: { tabId: tab.id },
@@ -60,13 +54,11 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId.startsWith("play-with-streamline-")) {
-    const playerMode = info.menuItemId.includes("insta") ? "insta" : "netflix";
-
+  if (info.menuItemId === "play-with-streamline") {
     const videoUrl = info.srcUrl || info.linkUrl;
 
     if (videoUrl) {
-      openPlayerTab(videoUrl, playerMode);
+      openPlayerTab(videoUrl, "netflix");
     } else {
       chrome.scripting.executeScript(
         {
@@ -76,7 +68,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         (injectionResults) => {
           if (chrome.runtime.lastError) {
             console.error(chrome.runtime.lastError.message);
-            openPlayerTab(null, playerMode, info.pageUrl); // Fallback on error
+            openPlayerTab(null, "netflix", info.pageUrl); // Fallback on error
             return;
           }
           const firstVideoSrc =
@@ -84,9 +76,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             injectionResults[0] &&
             injectionResults[0].result;
           if (firstVideoSrc) {
-            openPlayerTab(firstVideoSrc, playerMode);
+            openPlayerTab(firstVideoSrc, "netflix");
           } else {
-            openPlayerTab(null, playerMode, info.pageUrl);
+            openPlayerTab(null, "netflix", info.pageUrl);
           }
         }
       );

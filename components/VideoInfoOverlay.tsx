@@ -48,11 +48,7 @@ const VideoInfoOverlay: React.FC<VideoInfoOverlayProps> = ({
             {formatDuration(duration)}
           </span>
         </div>
-        <p className="video-info-description">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
-          minim veniam, quis nostrud exercitation ullamco laboris.
-        </p>
+        <p className="video-info-description">No description available.</p>
       </div>
     </div>
   );

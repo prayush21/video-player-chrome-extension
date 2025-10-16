@@ -4,12 +4,9 @@
   "version": "1.0",
   "description": "A high-fidelity video playback experience, mirroring the sleek UI/UX of Netflix's player. This player allows users to open and play any local video file or video URL within the browser.",
   "permissions": [
-    "storage",
     "contextMenus",
-    "scripting"
-  ],
-  "host_permissions": [
-    "<all_urls>"
+    "scripting",
+    "activeTab"
   ],
   "action": {
     "default_title": "Streamline Player"
