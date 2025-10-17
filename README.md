@@ -117,7 +117,11 @@ streamline-player/
 - Some video URLs may not work due to CORS restrictions
 - DRM-protected content is not supported
 
-## 📝 License
+## � Privacy
+
+Streamline Player respects your privacy. We do not collect, store, or share any personal data. For more details, please see our [Privacy Policy](PRIVACY_POLICY.md).
+
+## �📝 License
 
 MIT License - feel free to use this project however you'd like!
 

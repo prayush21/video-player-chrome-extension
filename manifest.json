@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Streamline Player",
+  "name": "Netflix-like Video Player",
   "version": "1.0",
-  "description": "A high-fidelity video playback experience, mirroring the sleek UI/UX of Netflix's player. This player allows users to open and play any local video file or video URL within the browser.",
+  "description": "A Netflix-like video player experience, to make every content bingeworthy.",
   "permissions": [
     "contextMenus",
     "scripting",
