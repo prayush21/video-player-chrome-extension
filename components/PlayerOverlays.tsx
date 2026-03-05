@@ -17,6 +17,7 @@ interface PlayerOverlaysProps {
   handlePlaybackRateChange: (rate: number) => void;
   toggleFullscreen: () => void;
   togglePip: () => void;
+  videoSrc: string;
 }
 
 const PlayerOverlays: React.FC<PlayerOverlaysProps> = ({
@@ -32,6 +33,7 @@ const PlayerOverlays: React.FC<PlayerOverlaysProps> = ({
   handlePlaybackRateChange,
   toggleFullscreen,
   togglePip,
+  videoSrc,
 }) => {
   const handleInfoOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Toggle play/pause when clicking anywhere on the info overlay
@@ -80,6 +82,7 @@ const PlayerOverlays: React.FC<PlayerOverlaysProps> = ({
           toggleFullscreen={toggleFullscreen}
           togglePip={togglePip}
           title={title}
+          videoSrc={videoSrc}
         />
       </div>
     </>

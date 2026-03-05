@@ -32,6 +32,7 @@ interface PlayerControlsProps {
   toggleFullscreen: () => void;
   togglePip: () => void;
   title?: string;
+  videoSrc: string;
 }
 
 const NextEpisodeIcon: React.FC = () => (
@@ -52,6 +53,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   toggleFullscreen,
   togglePip,
   title = "Video Title",
+  videoSrc,
 }) => {
   const {
     isPlaying,
@@ -79,6 +81,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             progress={progress}
             duration={duration}
             buffered={buffered}
+            videoSrc={videoSrc}
             onSeek={handleSeek}
           />
         </div>

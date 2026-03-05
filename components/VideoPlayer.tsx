@@ -50,7 +50,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
 
   const handleError = () => {
     setError(
-      "The video could not be loaded. Please check the source URL and ensure it is a direct link to a video file."
+      "The video could not be loaded. Please check the source URL and ensure it is a direct link to a video file.",
     );
   };
 
@@ -166,6 +166,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
         handlePlaybackRateChange={handlePlaybackRateChange}
         toggleFullscreen={toggleFullscreen}
         togglePip={togglePip}
+        videoSrc={src}
       />
     </div>
   );
