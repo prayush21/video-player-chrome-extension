@@ -6,9 +6,15 @@ interface VideoPlayerProps {
   src: string;
   title: string;
   onBack: () => void;
+  onTitleChange: (title: string) => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({
+  src,
+  title,
+  onBack,
+  onTitleChange,
+}) => {
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<number | null>(null);
@@ -167,6 +173,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
         toggleFullscreen={toggleFullscreen}
         togglePip={togglePip}
         videoSrc={src}
+        onTitleChange={onTitleChange}
       />
     </div>
   );

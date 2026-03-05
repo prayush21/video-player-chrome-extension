@@ -18,6 +18,7 @@ interface PlayerOverlaysProps {
   toggleFullscreen: () => void;
   togglePip: () => void;
   videoSrc: string;
+  onTitleChange: (title: string) => void;
 }
 
 const PlayerOverlays: React.FC<PlayerOverlaysProps> = ({
@@ -34,6 +35,7 @@ const PlayerOverlays: React.FC<PlayerOverlaysProps> = ({
   toggleFullscreen,
   togglePip,
   videoSrc,
+  onTitleChange,
 }) => {
   const handleInfoOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Toggle play/pause when clicking anywhere on the info overlay
@@ -55,6 +57,8 @@ const PlayerOverlays: React.FC<PlayerOverlaysProps> = ({
           title={title}
           duration={playerState.duration}
           visible={infoOverlayVisible}
+          src={videoSrc}
+          onTitleChange={onTitleChange}
         />
       </div>
 

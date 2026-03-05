@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import VideoPlayer from "./components/VideoPlayer";
+import { formatVideoTitle } from "./utils/formatVideoTitle";
 
 // --- Reusable Props Interface ---
 interface VideoPlayerProps {
@@ -329,7 +330,7 @@ const styles = {
 
 const App: React.FC = () => {
   const [playerMode, setPlayerMode] = useState<"netflix" | "insta" | null>(
-    "netflix"
+    "netflix",
   );
   const [videoSource, setVideoSource] = useState<string | null>(null);
   const [videoTitle, setVideoTitle] = useState<string>("");
@@ -350,7 +351,9 @@ const App: React.FC = () => {
       try {
         const urlObject = new URL(src);
         const pathParts = urlObject.pathname.split("/");
-        setVideoTitle(pathParts[pathParts.length - 1] || "Remote Video");
+        setVideoTitle(
+          formatVideoTitle(pathParts[pathParts.length - 1]) || "Remote Video",
+        );
       } catch (error) {
         setVideoTitle("Remote Video");
       }
@@ -368,10 +371,10 @@ const App: React.FC = () => {
       if (file) {
         const url = URL.createObjectURL(file);
         setVideoSource(url);
-        setVideoTitle(file.name);
+        setVideoTitle(formatVideoTitle(file.name));
       }
     },
-    []
+    [],
   );
 
   const handleUrlSubmit = useCallback((event: React.FormEvent) => {
@@ -382,7 +385,9 @@ const App: React.FC = () => {
       try {
         const urlObject = new URL(url);
         const pathParts = urlObject.pathname.split("/");
-        setVideoTitle(pathParts[pathParts.length - 1] || "Remote Video");
+        setVideoTitle(
+          formatVideoTitle(pathParts[pathParts.length - 1]) || "Remote Video",
+        );
       } catch (error) {
         setVideoTitle("Remote Video");
       }
@@ -402,7 +407,7 @@ const App: React.FC = () => {
 
   const handlePlayDemo = () => {
     setVideoSource(
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
     );
     setVideoTitle("Big Buck Bunny (Demo)");
   };
@@ -417,6 +422,7 @@ const App: React.FC = () => {
           src={videoSource}
           title={videoTitle}
           onBack={resetVideoSource}
+          onTitleChange={setVideoTitle}
         />
       );
     }

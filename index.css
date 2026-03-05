@@ -926,6 +926,7 @@ button:hover .group-hover\/back\:opacity-100 {
   right: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
   padding: 5rem 2rem 1.5rem 2rem;
+  pointer-events: auto;
 }
 
 .controls-row {
@@ -1044,6 +1045,7 @@ button:hover .group-hover\/back\:opacity-100 {
 
 .player-overlay.visible {
   opacity: 1;
+  pointer-events: none;
 }
 
 .player-top-bar {
@@ -1053,6 +1055,7 @@ button:hover .group-hover\/back\:opacity-100 {
   right: 0;
   background: linear-gradient(to bottom, #000000, rgba(0, 0, 0, 0.6), transparent);
   padding: 1.5rem 2rem 5rem 2rem;
+  pointer-events: auto;
 }
 
 .back-button {
@@ -1304,6 +1307,33 @@ button:hover .group-hover\/back\:opacity-100 {
   margin-bottom: 1rem;
   line-height: 1.1;
   letter-spacing: -0.025em;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.video-info-title--editing {
+  cursor: text;
+  pointer-events: auto;
+}
+
+.video-title-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+  outline: none;
+  color: #ffffff;
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  width: 100%;
+  padding: 0;
+  caret-color: #ffffff;
+}
+
+.video-title-input::selection {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .video-info-meta {
