@@ -7,6 +7,8 @@ interface VideoPlayerProps {
   title: string;
   onBack: () => void;
   onTitleChange: (title: string) => void;
+  preRollSrc?: string;
+  postRollSrc?: string;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -14,12 +16,24 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   title,
   onBack,
   onTitleChange,
+  preRollSrc,
+  postRollSrc,
 }) => {
+  type PlaybackPhase = "pre" | "main" | "post" | "done";
+
+  const getInitialPhase = useCallback(
+    (): PlaybackPhase => (preRollSrc ? "pre" : "main"),
+    [preRollSrc],
+  );
+
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<number | null>(null);
   const pauseTimerRef = useRef<number | null>(null);
   const [error, setError] = useState<string>("");
+  const [playbackPhase, setPlaybackPhase] =
+    useState<PlaybackPhase>(getInitialPhase);
+  const [activeSrc, setActiveSrc] = useState<string>(preRollSrc || src);
 
   const {
     playerState,
@@ -40,6 +54,50 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const [infoOverlayVisible, setInfoOverlayVisible] = useState(true);
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
 
+  useEffect(() => {
+    const nextPhase = getInitialPhase();
+    setPlaybackPhase(nextPhase);
+    setActiveSrc(nextPhase === "pre" ? preRollSrc || src : src);
+    setHasStartedPlaying(false);
+    setInfoOverlayVisible(true);
+    setError("");
+  }, [src, preRollSrc, postRollSrc, getInitialPhase]);
+
+  useEffect(() => {
+    if (playerState.isPlaying) {
+      videoRef.current?.play().catch(() => {
+        // Browser autoplay policy may block seamless transition until user interacts.
+      });
+    }
+  }, [activeSrc, playerState.isPlaying]);
+
+  const handleSequenceEnded = useCallback(() => {
+    if (playbackPhase === "pre") {
+      setPlaybackPhase("main");
+      setActiveSrc(src);
+      return;
+    }
+
+    if (playbackPhase === "main" && postRollSrc) {
+      setPlaybackPhase("post");
+      setActiveSrc(postRollSrc);
+      return;
+    }
+
+    setPlaybackPhase("done");
+    handleEnded();
+  }, [playbackPhase, postRollSrc, src, handleEnded]);
+
+  const displayTitle =
+    playbackPhase === "pre"
+      ? "Intro Clip"
+      : playbackPhase === "post"
+        ? "Outro Clip"
+        : title;
+
+  const effectiveOnTitleChange =
+    playbackPhase === "main" ? onTitleChange : () => {};
+
   const hideControls = useCallback(() => {
     if (playerState.isPlaying) {
       setControlsVisible(false);
@@ -54,11 +112,25 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     controlsTimeoutRef.current = window.setTimeout(hideControls, 3000);
   }, [hideControls]);
 
-  const handleError = () => {
+  const handleError = useCallback(() => {
+    if (playbackPhase === "pre") {
+      // If pre-roll clip is missing, continue with the main video.
+      setPlaybackPhase("main");
+      setActiveSrc(src);
+      return;
+    }
+
+    if (playbackPhase === "post") {
+      // If post-roll clip is missing, treat playback as completed.
+      setPlaybackPhase("done");
+      handleEnded();
+      return;
+    }
+
     setError(
       "The video could not be loaded. Please check the source URL and ensure it is a direct link to a video file.",
     );
-  };
+  }, [playbackPhase, src, handleEnded]);
 
   useEffect(() => {
     const container = playerContainerRef.current;
@@ -148,11 +220,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     >
       <video
         ref={videoRef}
-        src={src}
+        src={activeSrc}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onProgress={handleProgress}
-        onEnded={handleEnded}
+        onEnded={handleSequenceEnded}
         onError={handleError}
         onClick={togglePlay}
         className="player-video"
@@ -160,7 +232,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
       {/* All Player Overlays (Info, Top Bar, Controls) */}
       <PlayerOverlays
-        title={title}
+        title={displayTitle}
         playerState={playerState}
         controlsVisible={controlsVisible}
         infoOverlayVisible={infoOverlayVisible}
@@ -172,8 +244,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         handlePlaybackRateChange={handlePlaybackRateChange}
         toggleFullscreen={toggleFullscreen}
         togglePip={togglePip}
-        videoSrc={src}
-        onTitleChange={onTitleChange}
+        videoSrc={activeSrc}
+        onTitleChange={effectiveOnTitleChange}
       />
     </div>
   );

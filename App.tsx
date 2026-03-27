@@ -329,6 +329,9 @@ const styles = {
 };
 
 const App: React.FC = () => {
+  const PRE_ROLL_CLIP_PATH = "/clips/pre-roll.mp4";
+  const POST_ROLL_CLIP_PATH = "/clips/post-roll.mp4";
+
   const [playerMode, setPlayerMode] = useState<"netflix" | "insta" | null>(
     "netflix",
   );
@@ -423,6 +426,8 @@ const App: React.FC = () => {
           title={videoTitle}
           onBack={resetVideoSource}
           onTitleChange={setVideoTitle}
+          preRollSrc={PRE_ROLL_CLIP_PATH}
+          postRollSrc={POST_ROLL_CLIP_PATH}
         />
       );
     }
@@ -539,6 +544,15 @@ const App: React.FC = () => {
               Play from URL
             </button>
           </form>
+
+          <p style={{ ...styles.helpText, marginTop: 0 }}>
+            Branding clips are loaded from local files:
+            <br />
+            Intro: /public/clips/pre-roll.mp4
+            <br />
+            Outro: /public/clips/post-roll.mp4
+          </p>
+
           <p style={styles.helpText}>
             Note: Only direct video file URLs (e.g., .mp4) are supported.
             <br />

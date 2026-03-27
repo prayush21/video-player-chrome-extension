@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Netflix-like Video Player",
-  "version": "1.0",
+  "version": "1.1.0",
   "description": "A Netflix-like video player experience, to make every content bingeworthy.",
   "permissions": [
     "contextMenus",
