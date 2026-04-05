@@ -161,14 +161,31 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     [effectiveDurations.main, effectiveDurations.pre, hasPostRoll, hasPreRoll],
   );
 
+  const resetPlaybackToStart = useCallback(() => {
+    const initialPhase = getInitialPhase() as ClipPhase;
+    pendingSeekRef.current = 0;
+    setPlaybackPhase(initialPhase);
+    setActiveSrc(getPhaseSrc(initialPhase));
+    setError("");
+  }, [getInitialPhase, getPhaseSrc]);
+
   const composedPlayerState = useMemo(() => {
+    const compositeDuration = getCompositeDuration();
+
     if (playbackPhase === "done") {
-      return playerState;
+      return {
+        ...playerState,
+        progress:
+          compositeDuration > 0 ? compositeDuration : playerState.progress,
+        buffered:
+          compositeDuration > 0 ? compositeDuration : playerState.buffered,
+        duration:
+          compositeDuration > 0 ? compositeDuration : playerState.duration,
+      };
     }
 
     const phase = playbackPhase as ClipPhase;
     const phaseOffset = getPhaseStartOffset(phase);
-    const compositeDuration = getCompositeDuration();
     const progress = Math.min(
       compositeDuration,
       phaseOffset + Math.max(0, playerState.progress),
@@ -262,6 +279,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }, [activeSrc, playerState.isPlaying]);
 
+  useEffect(() => {
+    // Keyboard play (space) bypasses click handlers; when playback is complete,
+    // force replay to start from the first segment.
+    if (playbackPhase === "done" && playerState.isPlaying) {
+      resetPlaybackToStart();
+    }
+  }, [playbackPhase, playerState.isPlaying, resetPlaybackToStart]);
+
   const handleSequenceEnded = useCallback(() => {
     if (playbackPhase === "done") {
       handleEnded();
@@ -334,6 +359,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       pendingSeekRef.current = null;
     }
   }, [handleLoadedMetadata, playbackPhase]);
+
+  const handleReplayAwareTogglePlay = useCallback(() => {
+    if (playbackPhase === "done" && !playerState.isPlaying) {
+      resetPlaybackToStart();
+    }
+
+    togglePlay();
+  }, [playbackPhase, playerState.isPlaying, resetPlaybackToStart, togglePlay]);
 
   const hideControls = useCallback(() => {
     if (playerState.isPlaying) {
@@ -444,7 +477,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only toggle play if clicking on the video container itself, not controls
     if (e.target === e.currentTarget) {
-      togglePlay();
+      handleReplayAwareTogglePlay();
     }
   };
 
@@ -463,7 +496,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onProgress={handleProgress}
         onEnded={handleSequenceEnded}
         onError={handleError}
-        onClick={togglePlay}
+        onClick={handleReplayAwareTogglePlay}
         className="player-video"
       />
 
@@ -474,7 +507,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         controlsVisible={controlsVisible}
         infoOverlayVisible={infoOverlayVisible}
         onBack={onBack}
-        togglePlay={togglePlay}
+        togglePlay={handleReplayAwareTogglePlay}
         handleSeek={handleCompositeSeek}
         handleVolumeChange={handleVolumeChange}
         toggleMute={toggleMute}
