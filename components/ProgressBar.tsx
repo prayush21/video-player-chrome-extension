@@ -12,6 +12,9 @@ interface ProgressBarProps {
 
 const PREVIEW_WIDTH = 160;
 const PREVIEW_HEIGHT = 90;
+const HOVER_DWELL_MS = 150;
+const HOVER_THROTTLE_MS = 140;
+const HOVER_MIN_DELTA_PX = 8;
 
 const ProgressBar: React.FC<ProgressBarProps> = ({
   progress,
@@ -22,6 +25,13 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 }) => {
   const progressBarRef = useRef<HTMLDivElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const hoverDwellTimerRef = useRef<number | null>(null);
+  const hoverThrottleTimerRef = useRef<number | null>(null);
+  const hasTriggeredPreviewRef = useRef(false);
+  const lastPreviewRequestAtRef = useRef(0);
+  const lastPreviewXRef = useRef<number | null>(null);
+  const pendingPreviewTimeRef = useRef<number | null>(null);
+  const pendingPreviewXRef = useRef<number | null>(null);
   const [isSeeking, setIsSeeking] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [hoverPosition, setHoverPosition] = useState(0);
@@ -91,6 +101,77 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
     [isSeeking, duration, onSeek],
   );
 
+  const clearHoverTimers = useCallback(() => {
+    if (hoverDwellTimerRef.current !== null) {
+      clearTimeout(hoverDwellTimerRef.current);
+      hoverDwellTimerRef.current = null;
+    }
+    if (hoverThrottleTimerRef.current !== null) {
+      clearTimeout(hoverThrottleTimerRef.current);
+      hoverThrottleTimerRef.current = null;
+    }
+    pendingPreviewTimeRef.current = null;
+    pendingPreviewXRef.current = null;
+  }, []);
+
+  const requestPreview = useCallback(
+    (time: number, hoverX: number) => {
+      seekToTime(time);
+      hasTriggeredPreviewRef.current = true;
+      lastPreviewRequestAtRef.current = Date.now();
+      lastPreviewXRef.current = hoverX;
+    },
+    [seekToTime],
+  );
+
+  const schedulePreviewRequest = useCallback(
+    (time: number, hoverX: number) => {
+      pendingPreviewTimeRef.current = time;
+      pendingPreviewXRef.current = hoverX;
+
+      if (!hasTriggeredPreviewRef.current) {
+        if (hoverDwellTimerRef.current === null) {
+          hoverDwellTimerRef.current = window.setTimeout(() => {
+            hoverDwellTimerRef.current = null;
+            const nextTime = pendingPreviewTimeRef.current;
+            const nextX = pendingPreviewXRef.current;
+            if (nextTime !== null && nextX !== null) {
+              requestPreview(nextTime, nextX);
+            }
+          }, HOVER_DWELL_MS);
+        }
+        return;
+      }
+
+      if (
+        lastPreviewXRef.current !== null &&
+        Math.abs(hoverX - lastPreviewXRef.current) < HOVER_MIN_DELTA_PX
+      ) {
+        return;
+      }
+
+      const elapsed = Date.now() - lastPreviewRequestAtRef.current;
+      if (elapsed >= HOVER_THROTTLE_MS) {
+        requestPreview(time, hoverX);
+        return;
+      }
+
+      if (hoverThrottleTimerRef.current !== null) {
+        return;
+      }
+
+      hoverThrottleTimerRef.current = window.setTimeout(() => {
+        hoverThrottleTimerRef.current = null;
+        const nextTime = pendingPreviewTimeRef.current;
+        const nextX = pendingPreviewXRef.current;
+        if (nextTime !== null && nextX !== null) {
+          requestPreview(nextTime, nextX);
+        }
+      }, HOVER_THROTTLE_MS - elapsed);
+    },
+    [requestPreview],
+  );
+
   const handleBarMouseMove = (
     e: React.MouseEvent<HTMLDivElement, MouseEvent>,
   ) => {
@@ -98,17 +179,25 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       const { position, time } = getHoverInfo(e);
       setHoverPosition(position);
       setHoverTime(time);
-      seekToTime(time);
+      schedulePreviewRequest(time, e.clientX);
     }
   };
 
   const handleBarMouseEnter = () => {
     if (duration > 0) {
+      hasTriggeredPreviewRef.current = false;
+      lastPreviewRequestAtRef.current = 0;
+      lastPreviewXRef.current = null;
+      clearHoverTimers();
       setIsHovering(true);
     }
   };
 
   const handleBarMouseLeave = () => {
+    clearHoverTimers();
+    hasTriggeredPreviewRef.current = false;
+    lastPreviewRequestAtRef.current = 0;
+    lastPreviewXRef.current = null;
     setIsHovering(false);
     clearPreview();
   };
@@ -123,6 +212,12 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isSeeking, handleMouseMove, handleMouseUp]);
+
+  React.useEffect(() => {
+    return () => {
+      clearHoverTimers();
+    };
+  }, [clearHoverTimers]);
 
   const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
   const bufferedPercent = duration > 0 ? (buffered / duration) * 100 : 0;

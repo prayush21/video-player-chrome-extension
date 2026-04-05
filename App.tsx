@@ -214,6 +214,73 @@ const styles = {
     flexDirection: "column" as const,
     gap: "2rem",
   },
+  preferencePanel: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "1rem",
+    flexWrap: "wrap" as const,
+    padding: "0.25rem 0",
+  },
+  preferenceControlsRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "1.5rem",
+    flexWrap: "wrap" as const,
+    width: "100%",
+  },
+  preferenceControlItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.6rem",
+  },
+  preferenceInlineLabel: {
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    color: "#f3f4f6",
+    whiteSpace: "nowrap" as const,
+  },
+  preferenceTextBlock: {
+    textAlign: "left" as const,
+  },
+  preferenceTitle: {
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    color: "#f3f4f6",
+  },
+  preferenceDescription: {
+    marginTop: "0.2rem",
+    fontSize: "0.8rem",
+    color: "#9ca3af",
+  },
+  toggleSwitch: {
+    width: "3rem",
+    height: "1.75rem",
+    borderRadius: "9999px",
+    border: "1px solid #4b5563",
+    backgroundColor: "#374151",
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "0.15rem",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  },
+  toggleSwitchActive: {
+    backgroundColor: "#b20710",
+    border: "1px solid #dc2626",
+  },
+  toggleKnob: {
+    width: "1.35rem",
+    height: "1.35rem",
+    borderRadius: "50%",
+    backgroundColor: "#ffffff",
+    transition: "transform 0.2s ease",
+    transform: "translateX(0)",
+  },
+  toggleKnobActive: {
+    transform: "translateX(1.2rem)",
+  },
   uploadLabel: {
     cursor: "pointer",
     display: "inline-flex",
@@ -329,12 +396,49 @@ const styles = {
 };
 
 const App: React.FC = () => {
+  const BRANDING_CLIP_PATHS = {
+    netflix: {
+      pre: "/clips/netflix-roll.mp4",
+      post: "/clips/netflix-roll.mp4",
+    },
+    hbo: {
+      pre: "/clips/hbo-roll.mp4",
+      post: "/clips/hbo-roll.mp4",
+    },
+  } as const;
+
+  type BrandingTheme = keyof typeof BRANDING_CLIP_PATHS;
+
   const [playerMode, setPlayerMode] = useState<"netflix" | "insta" | null>(
     "netflix",
   );
   const [videoSource, setVideoSource] = useState<string | null>(null);
   const [videoTitle, setVideoTitle] = useState<string>("");
   const [initialUrl, setInitialUrl] = useState<string>("");
+  const [includeBrandingClips, setIncludeBrandingClips] = useState<boolean>(
+    () => {
+      try {
+        const savedPreference = localStorage.getItem(
+          "streamline_include_branding_clips",
+        );
+        if (savedPreference === null) return true;
+        return savedPreference === "true";
+      } catch {
+        return true;
+      }
+    },
+  );
+  const [brandingTheme, setBrandingTheme] = useState<BrandingTheme>(() => {
+    try {
+      const savedTheme = localStorage.getItem("streamline_branding_theme");
+      if (savedTheme === "netflix" || savedTheme === "hbo") {
+        return savedTheme;
+      }
+      return "netflix";
+    } catch {
+      return "netflix";
+    }
+  });
   const urlInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -343,6 +447,19 @@ const App: React.FC = () => {
     const src = params.get("src");
     const mode = params.get("mode");
     const pageUrl = params.get("pageUrl");
+    const includeBrandingParam = params.get("includeBranding");
+    const brandingThemeParam = params.get("brandingTheme");
+
+    if (includeBrandingParam !== null) {
+      const shouldIncludeBranding = !["0", "false", "off"].includes(
+        includeBrandingParam.toLowerCase(),
+      );
+      setIncludeBrandingClips(shouldIncludeBranding);
+    }
+
+    if (brandingThemeParam === "netflix" || brandingThemeParam === "hbo") {
+      setBrandingTheme(brandingThemeParam);
+    }
 
     // Only support netflix mode for now
     if (src && mode === "netflix") {
@@ -364,6 +481,17 @@ const App: React.FC = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "streamline_include_branding_clips",
+      includeBrandingClips.toString(),
+    );
+  }, [includeBrandingClips]);
+
+  useEffect(() => {
+    localStorage.setItem("streamline_branding_theme", brandingTheme);
+  }, [brandingTheme]);
 
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -412,6 +540,8 @@ const App: React.FC = () => {
     setVideoTitle("Big Buck Bunny (Demo)");
   };
 
+  const selectedBrandingClips = BRANDING_CLIP_PATHS[brandingTheme];
+
   const renderPlayer = () => {
     if (!videoSource || !playerMode) return null;
 
@@ -423,6 +553,12 @@ const App: React.FC = () => {
           title={videoTitle}
           onBack={resetVideoSource}
           onTitleChange={setVideoTitle}
+          preRollSrc={
+            includeBrandingClips ? selectedBrandingClips.pre : undefined
+          }
+          postRollSrc={
+            includeBrandingClips ? selectedBrandingClips.post : undefined
+          }
         />
       );
     }
@@ -457,7 +593,7 @@ const App: React.FC = () => {
             fontSize: window.innerWidth >= 768 ? "1.25rem" : "1.125rem",
           }}
         >
-          Select a local file or enter a direct video URL.
+          Select a device file or enter a direct video URL.
         </p>
 
         <div style={styles.formContainer}>
@@ -488,7 +624,7 @@ const App: React.FC = () => {
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                 />
               </svg>
-              Play Local Video File
+              Play a Video File from Your Computer
             </label>
             <input
               ref={fileInputRef}
@@ -539,6 +675,62 @@ const App: React.FC = () => {
               Play from URL
             </button>
           </form>
+
+          <div style={styles.preferencePanel}>
+            <div style={styles.preferenceControlsRow}>
+              <div style={styles.preferenceControlItem}>
+                <span style={styles.preferenceInlineLabel}>Show Intro</span>
+                <button
+                  type="button"
+                  onClick={() => setIncludeBrandingClips((prev) => !prev)}
+                  style={{
+                    ...styles.toggleSwitch,
+                    ...(includeBrandingClips ? styles.toggleSwitchActive : {}),
+                  }}
+                  aria-pressed={includeBrandingClips}
+                  aria-label="Show Intro"
+                  title={
+                    includeBrandingClips
+                      ? "Intro/outro enabled"
+                      : "Intro/outro disabled"
+                  }
+                >
+                  <span
+                    style={{
+                      ...styles.toggleKnob,
+                      ...(includeBrandingClips ? styles.toggleKnobActive : {}),
+                    }}
+                  />
+                </button>
+              </div>
+
+              <div style={styles.preferenceControlItem}>
+                <span style={styles.preferenceInlineLabel}>
+                  Choose Intro Theme
+                </span>
+                <select
+                  value={brandingTheme}
+                  onChange={(e) =>
+                    setBrandingTheme(e.target.value as BrandingTheme)
+                  }
+                  style={{
+                    backgroundColor: "#111827",
+                    color: "#f9fafb",
+                    border: "1px solid #4b5563",
+                    borderRadius: "0.5rem",
+                    padding: "0.45rem 0.75rem",
+                    fontSize: "0.9rem",
+                    cursor: "pointer",
+                  }}
+                  aria-label="Choose Intro Theme"
+                >
+                  <option value="netflix">Netflix</option>
+                  <option value="hbo">HBO</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <p style={styles.helpText}>
             Note: Only direct video file URLs (e.g., .mp4) are supported.
             <br />
