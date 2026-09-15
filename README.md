@@ -1,4 +1,4 @@
-# 🎬 Netflix-like Player
+# 🎬 Netflix-like Video Player
 
 A high-fidelity video player Chrome extension with a sleek Netflix-inspired UI. Play local video files or video URLs directly in your browser with a premium viewing experience.
 
