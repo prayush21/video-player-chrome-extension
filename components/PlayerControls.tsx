@@ -33,6 +33,7 @@ interface PlayerControlsProps {
   togglePip: () => void;
   title?: string;
   videoSrc: string;
+  onNext?: () => void;
 }
 
 const NextEpisodeIcon: React.FC = () => (
@@ -54,6 +55,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   togglePip,
   title = "Video Title",
   videoSrc,
+  onNext,
 }) => {
   const {
     isPlaying,
@@ -117,13 +119,16 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           >
             <Forward10Icon2 />
           </button>
-          <button
-            className="control-btn"
-            aria-label="Next episode"
-            title="Next episode"
-          >
-            <NextEpisodeIcon />
-          </button>
+          {onNext && (
+            <button
+              onClick={onNext}
+              className="control-btn"
+              aria-label="Next episode"
+              title="Next episode"
+            >
+              <NextEpisodeIcon />
+            </button>
+          )}
           <VolumeControl
             volume={volume}
             isMuted={isMuted}

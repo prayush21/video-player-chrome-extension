@@ -15,6 +15,12 @@ interface VideoPlayerProps {
   onTitleChange: (title: string) => void;
   preRollSrc?: string;
   postRollSrc?: string;
+  /** Start playback as soon as the player mounts (used for My List queues). */
+  autoStart?: boolean;
+  /** When set, the controls show a "Next episode" button that calls this. */
+  onNext?: () => void;
+  /** Called once the whole sequence (pre-roll, main, post-roll) has ended. */
+  onFinished?: () => void;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -24,6 +30,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onTitleChange,
   preRollSrc,
   postRollSrc,
+  autoStart = false,
+  onNext,
+  onFinished,
 }) => {
   type PlaybackPhase = "pre" | "main" | "post" | "done";
   type ClipPhase = Exclude<PlaybackPhase, "done">;
@@ -280,7 +289,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     setPlaybackPhase("done");
     handleEnded();
-  }, [getPhaseSrc, handleEnded, phaseOrder, playbackPhase]);
+    onFinished?.();
+  }, [getPhaseSrc, handleEnded, onFinished, phaseOrder, playbackPhase]);
+
+  const hasAutoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || hasAutoStartedRef.current) return;
+    hasAutoStartedRef.current = true;
+    togglePlay();
+    // Only on mount: the parent remounts the player (keyed by src) per video.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
 
   const handleCompositeSeek = useCallback(
     (virtualTime: number) => {
@@ -483,6 +502,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         togglePip={togglePip}
         videoSrc={activeSrc}
         onTitleChange={onTitleChange}
+        onNext={onNext}
       />
     </div>
   );

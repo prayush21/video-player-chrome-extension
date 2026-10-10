@@ -1415,3 +1415,344 @@ button:hover .group-hover\/back\:opacity-100 {
   }
 }
 
+
+/* ---------------------------------------------------------------------------
+   My List (videos saved from X) - see components/WatchList.tsx
+   --------------------------------------------------------------------------- */
+
+.wl-page {
+  height: 100vh;
+  overflow-y: auto;
+  background: #141414;
+  color: #fff;
+  padding-bottom: 64px;
+}
+.wl-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 4vw;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.75), transparent);
+}
+.wl-brand {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.wl-brand-accent {
+  color: #e50914;
+}
+.wl-header-btn {
+  background: transparent;
+  color: #e5e5e5;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+.wl-header-btn:hover {
+  background: #ffffff1a;
+  border-color: #fff;
+}
+.wl-hero {
+  position: relative;
+  min-height: 62vh;
+  margin-top: -70px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+.wl-hero-bg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.05);
+}
+.wl-hero-shade {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background:
+    linear-gradient(
+      77deg,
+      rgba(0, 0, 0, 0.85) 0%,
+      rgba(0, 0, 0, 0.45) 45%,
+      transparent 75%
+    ),
+    linear-gradient(0deg, #141414, #14141400 35%);
+}
+.wl-hero-content {
+  position: relative;
+  max-width: 640px;
+  padding: 120px 4vw 48px;
+}
+.wl-hero-eyebrow {
+  color: #e50914;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.wl-hero-title {
+  font-size: clamp(1.8rem, 3.6vw, 3rem);
+  font-weight: 800;
+  line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+.wl-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  color: #d2d2d2;
+  font-size: 0.95rem;
+}
+.wl-hero-author {
+  color: #46d369;
+  font-weight: 700;
+}
+.wl-hero-text {
+  margin-top: 14px;
+  color: #e5e5e5;
+  font-size: 1rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-line;
+}
+.wl-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+.wl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 26px;
+  border: 0;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
+}
+.wl-btn-primary {
+  background: #fff;
+  color: #000;
+}
+.wl-btn-primary:hover {
+  opacity: 0.8;
+}
+.wl-btn-secondary {
+  background: #6d6d6eb3;
+  color: #fff;
+}
+.wl-btn-secondary:hover {
+  background: #6d6d6e73;
+}
+.wl-glyph {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+.wl-rows {
+  position: relative;
+  padding: 0 4vw;
+}
+.wl-row {
+  margin-top: 28px;
+}
+.wl-row-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #e5e5e5;
+  margin-bottom: 10px;
+}
+.wl-row-count {
+  color: gray;
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin-left: 6px;
+}
+.wl-row-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(220px, 280px);
+  gap: 10px;
+  overflow-x: auto;
+  padding: 8px 2px 16px;
+  scroll-snap-type: x proximity;
+}
+.wl-card {
+  position: relative;
+  scroll-snap-align: start;
+  background: #181818;
+  border-radius: 6px;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.wl-card:hover {
+  transform: scale(1.04);
+  box-shadow: 0 10px 28px #000000b3;
+  z-index: 2;
+}
+.wl-card-media {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: 0;
+  background: #2a2a2a;
+  cursor: pointer;
+}
+.wl-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.wl-card-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #8c8c8c;
+  font-weight: 700;
+}
+.wl-card-play {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #00000059;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.wl-card-play .wl-glyph {
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #0006;
+}
+.wl-card:hover .wl-card-play {
+  opacity: 1;
+}
+.wl-card-duration {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #000000bf;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.wl-card-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: #e50914;
+}
+.wl-card.is-watched .wl-card-media img {
+  filter: brightness(0.75);
+}
+.wl-card-body {
+  padding: 10px 12px 12px;
+}
+.wl-card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+}
+.wl-card-meta {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: #a3a3a3;
+}
+.wl-card-meta a {
+  color: #bcbcbc;
+  text-decoration: none;
+}
+.wl-card-meta a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+.wl-card-warn {
+  color: #f5c518;
+}
+.wl-card-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: #000000a6;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.wl-card:hover .wl-card-remove,
+.wl-card-remove:focus-visible {
+  opacity: 1;
+}
+.wl-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 12px 18px;
+  border-radius: 6px;
+  border-left: 4px solid #e50914;
+  background: #232323;
+  color: #fff;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 24px #0009;
+  z-index: 10;
+}

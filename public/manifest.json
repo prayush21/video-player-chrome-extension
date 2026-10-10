@@ -1,15 +1,35 @@
 {
   "manifest_version": 3,
   "name": "Netflix-like Video Player",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "A Netflix-like video player experience, to make every content bingeworthy.",
   "permissions": [
     "contextMenus",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "https://cdn.syndication.twimg.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["x-intercept.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["x-content.js"],
+      "css": ["x-content.css"],
+      "run_at": "document_idle"
+    }
   ],
   "action": {
-    "default_title": "Streamline Player"
+    "default_title": "Netflix-like Video Player"
   },
   "background": {
     "service_worker": "background.js"

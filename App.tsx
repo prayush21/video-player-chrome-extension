@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import VideoPlayer from "./components/VideoPlayer";
+import WatchList from "./components/WatchList";
+import useWatchList, { getItemTitle } from "./hooks/useWatchList";
 import { formatVideoTitle } from "./utils/formatVideoTitle";
 
 // --- Reusable Props Interface ---
@@ -439,6 +441,13 @@ const App: React.FC = () => {
       return "netflix";
     }
   });
+  const watchList = useWatchList();
+  const [view, setView] = useState<"list" | "source">("list");
+  // Ids of the My List videos being played back to back, and the current one.
+  const [queue, setQueue] = useState<string[]>([]);
+  const [currentItemId, setCurrentItemId] = useState<string | null>(null);
+  const [autoAdvanced, setAutoAdvanced] = useState(false);
+  const [notice, setNotice] = useState("");
   const urlInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -528,10 +537,59 @@ const App: React.FC = () => {
     }
     setVideoSource(null);
     setVideoTitle("");
+    setCurrentItemId(null);
+    setQueue([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
     // Use history.pushState to clean the URL without reloading the page
     window.history.pushState({}, "", window.location.pathname);
   }, [videoSource]);
+
+  const playFromList = useCallback(
+    async (id: string, playQueue: string[]) => {
+      setNotice("");
+      let item = watchList.items.find((i) => i.id === id);
+      if (!item) return;
+      if (!item.mp4) {
+        setNotice("Finding the video file...");
+        item = (await watchList.resolve(id)) || item;
+      }
+      if (!item.mp4) {
+        setNotice(
+          `Couldn't find a playable file for @${item.author}'s post. It may be deleted or private. Try "Open on X".`,
+        );
+        return;
+      }
+      setNotice("");
+      setQueue(playQueue.includes(id) ? playQueue : [id, ...playQueue]);
+      setCurrentItemId(id);
+      setVideoTitle(getItemTitle(item));
+      setVideoSource(item.mp4);
+    },
+    [watchList],
+  );
+
+  const nextItemId =
+    (currentItemId && queue[queue.indexOf(currentItemId) + 1]) || null;
+
+  const playNext = useCallback(() => {
+    if (!nextItemId) return;
+    setAutoAdvanced(true);
+    playFromList(nextItemId, queue);
+  }, [nextItemId, playFromList, queue]);
+
+  const handleListItemFinished = useCallback(() => {
+    if (!currentItemId) return;
+    watchList.update(currentItemId, { watchedAt: Date.now() });
+    playNext();
+  }, [currentItemId, playNext, watchList]);
+
+  const handleListItemTitleChange = useCallback(
+    (title: string) => {
+      setVideoTitle(title);
+      if (currentItemId) watchList.update(currentItemId, { title });
+    },
+    [currentItemId, watchList],
+  );
 
   const handlePlayDemo = () => {
     setVideoSource(
@@ -546,19 +604,27 @@ const App: React.FC = () => {
     if (!videoSource || !playerMode) return null;
 
     if (playerMode === "netflix") {
+      const isListPlayback = Boolean(currentItemId);
+      // In a My List queue, only play the intro before the first video and
+      // the outro after the last one.
+      const showPreRoll =
+        includeBrandingClips && !(isListPlayback && autoAdvanced);
+      const showPostRoll =
+        includeBrandingClips && !(isListPlayback && nextItemId);
       return (
         <VideoPlayer
           key={videoSource}
           src={videoSource}
           title={videoTitle}
           onBack={resetVideoSource}
-          onTitleChange={setVideoTitle}
-          preRollSrc={
-            includeBrandingClips ? selectedBrandingClips.pre : undefined
+          onTitleChange={
+            isListPlayback ? handleListItemTitleChange : setVideoTitle
           }
-          postRollSrc={
-            includeBrandingClips ? selectedBrandingClips.post : undefined
-          }
+          preRollSrc={showPreRoll ? selectedBrandingClips.pre : undefined}
+          postRollSrc={showPostRoll ? selectedBrandingClips.post : undefined}
+          autoStart={isListPlayback}
+          onNext={nextItemId ? playNext : undefined}
+          onFinished={isListPlayback ? handleListItemFinished : undefined}
         />
       );
     }
@@ -731,6 +797,24 @@ const App: React.FC = () => {
             </div>
           </div>
 
+          {watchList.items.length > 0 ? (
+            <button
+              type="button"
+              className="wl-btn wl-btn-secondary"
+              style={{ alignSelf: "center" }}
+              onClick={() => setView("list")}
+            >
+              Back to My List ({watchList.items.length})
+            </button>
+          ) : (
+            <p style={styles.helpText}>
+              New: on X, every post with a video gets a{" "}
+              <strong style={{ color: "#e5e7eb" }}>My List</strong> button.
+              Save videos while you scroll, then click this extension's icon
+              to binge them here.
+            </p>
+          )}
+
           <p style={styles.helpText}>
             Note: Only direct video file URLs (e.g., .mp4) are supported.
             <br />
@@ -832,6 +916,21 @@ const App: React.FC = () => {
   );
 
   if (videoSource) return renderPlayer();
+  // Avoid flashing the source picker before My List has loaded.
+  if (!watchList.loaded) return <div style={{ height: "100vh" }} />;
+  if (view === "list" && watchList.items.length > 0) {
+    return (
+      <>
+        <WatchList
+          items={watchList.items}
+          onPlay={playFromList}
+          onRemove={watchList.remove}
+          onOpenSource={() => setView("source")}
+        />
+        {notice && <div className="wl-notice">{notice}</div>}
+      </>
+    );
+  }
   return renderSourceSelector();
 };
 
