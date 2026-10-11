@@ -34,7 +34,7 @@ they accept the new warning, and usually means a slower review, so it should be
 a deliberate choice:
 
 ```bash
-npm run build && npm run permissions:update   # then commit the lock file
+npm run permissions:update   # builds, then rewrites the lock; commit it
 ```
 
 Also update the Web Store listing's permission justifications and `PRIVACY_POLICY.md`.

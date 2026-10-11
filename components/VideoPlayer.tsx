@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import usePlayerState from "../hooks/usePlayerState";
 import PlayerOverlays from "./PlayerOverlays";
+import useOverlayVisibility from "../hooks/useOverlayVisibility";
 
 interface VideoPlayerProps {
   src: string;
@@ -46,8 +47,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const controlsTimeoutRef = useRef<number | null>(null);
-  const pauseTimerRef = useRef<number | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
   const [error, setError] = useState<string>("");
   const [playbackPhase, setPlaybackPhase] =
@@ -76,9 +75,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     togglePip,
   } = usePlayerState(videoRef, playerContainerRef);
 
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const [infoOverlayVisible, setInfoOverlayVisible] = useState(true);
-  const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
+  const { controlsVisible, infoOverlayVisible, resetOverlay } =
+    useOverlayVisibility(
+      playerContainerRef,
+      playerState.isPlaying,
+      playerState.progress,
+    );
 
   const hasPreRoll = Boolean(preRollSrc);
   const hasPostRoll = Boolean(postRollSrc);
@@ -258,10 +260,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     setPlaybackPhase(nextPhase);
     setActiveSrc(nextPhase === "pre" ? preRollSrc || src : src);
     pendingSeekRef.current = null;
-    setHasStartedPlaying(false);
-    setInfoOverlayVisible(true);
+    resetOverlay();
     setError("");
-  }, [src, preRollSrc, postRollSrc, getInitialPhase]);
+  }, [src, preRollSrc, postRollSrc, getInitialPhase, resetOverlay]);
 
   useEffect(() => {
     if (playerState.isPlaying) {
@@ -354,19 +355,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }, [handleLoadedMetadata, playbackPhase]);
 
-  const hideControls = useCallback(() => {
-    if (playerState.isPlaying) {
-      setControlsVisible(false);
-    }
-  }, [playerState.isPlaying]);
-
-  const showControls = useCallback(() => {
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
-    }
-    setControlsVisible(true);
-    controlsTimeoutRef.current = window.setTimeout(hideControls, 3000);
-  }, [hideControls]);
 
   const handleError = useCallback(() => {
     if (playbackPhase === "pre") {
@@ -388,66 +376,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     );
   }, [playbackPhase, src, handleEnded]);
 
-  useEffect(() => {
-    const container = playerContainerRef.current;
-    if (container) {
-      container.addEventListener("mousemove", showControls);
-      container.addEventListener("mouseleave", hideControls);
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("mousemove", showControls);
-        container.removeEventListener("mouseleave", hideControls);
-      }
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    };
-  }, [showControls, hideControls]);
-
-  useEffect(() => {
-    showControls(); // show controls on initial load or state change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerState.isPlaying]);
-
-  // Handle info overlay visibility
-  useEffect(() => {
-    // Clear any existing pause timer
-    if (pauseTimerRef.current) {
-      clearTimeout(pauseTimerRef.current);
-      pauseTimerRef.current = null;
-    }
-
-    if (playerState.isPlaying) {
-      // Hide info overlay when playing
-      if (hasStartedPlaying) {
-        setInfoOverlayVisible(false);
-      } else {
-        // First play - hide overlay and mark as started
-        setHasStartedPlaying(true);
-        setInfoOverlayVisible(false);
-      }
-    } else {
-      // Video is paused
-      if (hasStartedPlaying && playerState.progress > 0) {
-        // Start 30 second timer to show info overlay
-        pauseTimerRef.current = window.setTimeout(() => {
-          setInfoOverlayVisible(true);
-        }, 5000); // 5 seconds
-      }
-      // If video hasn't started playing yet, keep overlay visible
-      if (!hasStartedPlaying) {
-        setInfoOverlayVisible(true);
-      }
-    }
-
-    return () => {
-      if (pauseTimerRef.current) {
-        clearTimeout(pauseTimerRef.current);
-      }
-    };
-  }, [playerState.isPlaying, hasStartedPlaying, playerState.progress]);
 
   if (error) {
     return (

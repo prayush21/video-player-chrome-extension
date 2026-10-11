@@ -16,7 +16,7 @@ interface PlayerOverlaysProps {
   toggleMute: () => void;
   handlePlaybackRateChange: (rate: number) => void;
   toggleFullscreen: () => void;
-  togglePip: () => void;
+  togglePip?: () => void;
   videoSrc: string;
   onTitleChange: (title: string) => void;
   onNext?: () => void;

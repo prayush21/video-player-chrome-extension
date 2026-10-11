@@ -235,22 +235,27 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       {/* Preview Tooltip */}
       {isHovering && (
         <div className="preview-tooltip" style={{ left: `${hoverPosition}px` }}>
-          <div className="preview-image-container">
-            <canvas
-              ref={previewCanvasRef}
-              width={Math.round(PREVIEW_WIDTH * (window.devicePixelRatio || 1))}
-              height={Math.round(
-                PREVIEW_HEIGHT * (window.devicePixelRatio || 1),
-              )}
-              className="preview-canvas"
-              style={{
-                width: PREVIEW_WIDTH,
-                height: PREVIEW_HEIGHT,
-                opacity: hasPreview ? 1 : 0,
-              }}
-            />
-            {!hasPreview && <div className="preview-placeholder" />}
-          </div>
+          {/* No frames to show without a video file (YouTube): time only. */}
+          {videoSrc && (
+            <div className="preview-image-container">
+              <canvas
+                ref={previewCanvasRef}
+                width={Math.round(
+                  PREVIEW_WIDTH * (window.devicePixelRatio || 1),
+                )}
+                height={Math.round(
+                  PREVIEW_HEIGHT * (window.devicePixelRatio || 1),
+                )}
+                className="preview-canvas"
+                style={{
+                  width: PREVIEW_WIDTH,
+                  height: PREVIEW_HEIGHT,
+                  opacity: hasPreview ? 1 : 0,
+                }}
+              />
+              {!hasPreview && <div className="preview-placeholder" />}
+            </div>
+          )}
           <div className="preview-time">{formatTime(hoverTime)}</div>
         </div>
       )}

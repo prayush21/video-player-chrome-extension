@@ -41,6 +41,8 @@ const useVideoPreview = (
 
   // Initialize offscreen video
   useEffect(() => {
+    // No file to grab frames from (e.g. YouTube embeds): no previews.
+    if (!videoSrc) return;
     const video = document.createElement("video");
     video.preload = "metadata";
     video.muted = true;

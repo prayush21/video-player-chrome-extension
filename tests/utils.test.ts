@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { formatTime } from "../utils/formatTime";
 import { formatVideoTitle } from "../utils/formatVideoTitle";
-import { getItemTitle, WatchListItem } from "../hooks/useWatchList";
+import {
+  getAuthorLabel,
+  getItemTitle,
+  getPosterUrls,
+  getSourceUrl,
+  WatchListItem,
+} from "../hooks/useWatchList";
 
 describe("formatVideoTitle", () => {
   it.each([
@@ -58,5 +64,41 @@ describe("getItemTitle", () => {
     expect(getItemTitle({ ...base, text: "https://t.co/only-a-link" })).toBe(
       "@someone's video",
     );
+  });
+});
+
+describe("multi-platform helpers", () => {
+  const legacyX: WatchListItem = {
+    id: "1",
+    author: "someone",
+    tweetUrl: "https://x.com/someone/status/1",
+    savedAt: 0,
+    watchedAt: null,
+  };
+
+  it("keeps items saved before 1.5 working as X items", () => {
+    expect(getSourceUrl(legacyX)).toBe("https://x.com/someone/status/1");
+    expect(getAuthorLabel(legacyX)).toBe("@someone");
+  });
+
+  it("tries larger YouTube thumbnails before the saved poster", () => {
+    const yt = {
+      ...legacyX,
+      platform: "youtube" as const,
+      youtubeId: "abc",
+      poster: "https://i.ytimg.com/vi/abc/hqdefault.jpg",
+    };
+    expect(getPosterUrls(yt)).toEqual([
+      "https://i.ytimg.com/vi/abc/maxresdefault.jpg",
+      "https://i.ytimg.com/vi/abc/sddefault.jpg",
+      "https://i.ytimg.com/vi/abc/hqdefault.jpg",
+    ]);
+    expect(getPosterUrls({ ...legacyX, poster: "p.jpg" })).toEqual(["p.jpg"]);
+  });
+
+  it("labels YouTube channels without an @", () => {
+    const yt = { ...legacyX, platform: "youtube" as const, author: "Blender" };
+    expect(getAuthorLabel(yt)).toBe("Blender");
+    expect(getItemTitle(yt)).toBe("Blender's video");
   });
 });

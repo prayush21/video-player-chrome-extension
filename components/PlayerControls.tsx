@@ -30,7 +30,8 @@ interface PlayerControlsProps {
   toggleMute: () => void;
   handlePlaybackRateChange: (rate: number) => void;
   toggleFullscreen: () => void;
-  togglePip: () => void;
+  /** Omitted when picture-in-picture isn't possible (YouTube embeds). */
+  togglePip?: () => void;
   title?: string;
   videoSrc: string;
   onNext?: () => void;
@@ -155,15 +156,17 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             currentRate={playbackRate}
             onRateChange={handlePlaybackRateChange}
           />
-          <button
-            onClick={togglePip}
-            className="control-btn"
-            aria-label={
-              isPipActive ? "Exit Picture-in-Picture" : "Picture-in-Picture"
-            }
-          >
-            {isPipActive ? <PipExitIcon /> : <PipEnterIcon />}
-          </button>
+          {togglePip && (
+            <button
+              onClick={togglePip}
+              className="control-btn"
+              aria-label={
+                isPipActive ? "Exit Picture-in-Picture" : "Picture-in-Picture"
+              }
+            >
+              {isPipActive ? <PipExitIcon /> : <PipEnterIcon />}
+            </button>
+          )}
           <button
             onClick={toggleFullscreen}
             className="control-btn"

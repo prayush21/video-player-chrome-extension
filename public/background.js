@@ -90,8 +90,49 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 // ---------------------------------------------------------------------------
-// Watch List: videos saved from X (see x-content.js). Stored in
-// chrome.storage.local under "watchlist", newest first.
+// YouTube embeds: YouTube requires embedding clients to identify themselves
+// with an https Referer ("https://<app id>" for non-website clients) and shows
+// "Error 153" without one. Extension pages send no usable Referer, so set it,
+// only for embeds loaded by this extension's own pages.
+// ---------------------------------------------------------------------------
+
+const YOUTUBE_EMBED_RULE_ID = 1;
+
+function registerYouTubeEmbedReferer() {
+  if (!chrome.declarativeNetRequest) return;
+  chrome.declarativeNetRequest.updateSessionRules({
+    removeRuleIds: [YOUTUBE_EMBED_RULE_ID],
+    addRules: [
+      {
+        id: YOUTUBE_EMBED_RULE_ID,
+        priority: 1,
+        action: {
+          type: "modifyHeaders",
+          requestHeaders: [
+            {
+              header: "referer",
+              operation: "set",
+              value: `https://${chrome.runtime.id}.chromiumapp.org/`,
+            },
+          ],
+        },
+        condition: {
+          urlFilter: "||www.youtube.com/embed/",
+          resourceTypes: ["sub_frame"],
+          initiatorDomains: [chrome.runtime.id],
+        },
+      },
+    ],
+  });
+}
+
+// Session rules are cleared when the browser restarts; re-adding on every
+// service worker start is cheap and covers install, update and restart.
+registerYouTubeEmbedReferer();
+
+// ---------------------------------------------------------------------------
+// Watch List: videos saved from X and YouTube (see
+// content/*.js). Stored in chrome.storage.local under "watchlist", newest first.
 // ---------------------------------------------------------------------------
 
 const WATCHLIST_KEY = "watchlist";
@@ -162,7 +203,7 @@ async function resolveFromSyndication(id) {
   return videoFromTweetJson(tweet) || videoFromTweetJson(tweet.quoted_tweet);
 }
 
-async function resolveItem(item) {
+async function resolveX(item) {
   const ids = [item.id, ...(item.candidateIds || [])].filter(
     (id, i, arr) => id && arr.indexOf(id) === i,
   );
@@ -171,20 +212,45 @@ async function resolveItem(item) {
       const found = await resolveFromSyndication(id);
       if (found) {
         return {
-          ...item,
           mp4: found.mp4,
           poster: item.poster || found.poster,
           durationMs: item.durationMs || found.durationMs,
           aspectRatio: item.aspectRatio || found.aspectRatio,
           text: item.text || found.text,
-          resolveError: null,
         };
       }
     } catch (err) {
       console.warn("Watch List: could not resolve", id, err);
     }
   }
-  return { ...item, resolveError: "Couldn't find a playable file for this post." };
+  return null;
+}
+
+// Per platform: fills in whatever is needed to play a saved item, or
+// returns null if nothing playable was found.
+const RESOLVERS = {
+  x: resolveX,
+};
+
+function isPlayable(item) {
+  return Boolean(item.mp4 || item.youtubeId);
+}
+
+async function resolveItem(item) {
+  const resolver = RESOLVERS[item.platform || "x"];
+  let found = null;
+  if (resolver) {
+    try {
+      found = await resolver(item);
+    } catch (err) {
+      console.warn("Watch List: could not resolve", item.id, err);
+    }
+  }
+  if (found) return { ...item, ...found, resolveError: null };
+  return {
+    ...item,
+    resolveError: "Couldn't find a playable file for this post.",
+  };
 }
 
 async function updateItem(id, patch) {
@@ -206,8 +272,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       }
       const entry = { ...item, savedAt: Date.now(), watchedAt: null };
       await setWatchList([entry, ...list]);
-      // Resolve the MP4 in the background if the page didn't hand us one.
-      if (!entry.mp4) {
+      // Resolve the video in the background if the page didn't hand it over.
+      if (!isPlayable(entry)) {
         resolveItem(entry).then((resolved) => updateItem(entry.id, resolved));
       }
       return { saved: true };

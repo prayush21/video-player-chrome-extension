@@ -15,7 +15,7 @@ A high-fidelity video player Chrome extension with a sleek Netflix-inspired UI. 
   - Picture-in-Picture mode
   - Fullscreen support
   - Progress bar with seek functionality
-- **My List for X**: Save videos from x.com posts and binge them back to back
+- **My List for X and YouTube**: Save videos while you browse and binge them back to back
 - **Context Menu Integration**: Right-click on videos or links to open in Streamline Player
 
 ## 🚀 Installation
@@ -95,8 +95,8 @@ streamline-player/
 ├── public/               # Copied to dist/ as-is
 │   ├── manifest.json     # Extension manifest (version kept in sync with package.json)
 │   ├── background.js     # MV3 service worker (context menu, My List storage)
-│   ├── x-intercept.js    # x.com page-world script: captures MP4 URLs
-│   ├── x-content.js/.css # x.com content script: "My List" button
+│   ├── content/          # "My List" button: common.js + one adapter per site
+│   │                     # (x.js + x-intercept.js, youtube.js)
 │   ├── icons/ clips/
 ├── scripts/              # verify-dist, package, sync-version, permissions.lock.json
 ├── tests/                # Vitest unit tests

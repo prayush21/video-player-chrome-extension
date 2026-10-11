@@ -15,7 +15,7 @@
     "verify": "node scripts/verify-dist.mjs",
     "package": "node scripts/package.mjs",
     "release:check": "npm run typecheck && npm test && npm run build && npm run verify",
-    "permissions:update": "node scripts/verify-dist.mjs --print-permissions > scripts/permissions.lock.json",
+    "permissions:update": "vite build && node scripts/verify-dist.mjs --print-permissions > scripts/permissions.lock.json",
     "version": "node scripts/sync-version.mjs && git add public/manifest.json"
   },
   "dependencies": {

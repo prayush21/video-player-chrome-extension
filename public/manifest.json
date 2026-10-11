@@ -2,29 +2,57 @@
   "manifest_version": 3,
   "name": "Netflix-like Video Player",
   "version": "1.4.0",
-  "description": "A Netflix-like video player experience, to make every content bingeworthy.",
+  "description": "A Netflix-like video player. Save videos from X and YouTube to My List and binge them.",
   "permissions": [
     "contextMenus",
     "scripting",
     "activeTab",
-    "storage"
+    "storage",
+    "declarativeNetRequestWithHostAccess"
   ],
   "host_permissions": [
     "https://x.com/*",
     "https://twitter.com/*",
-    "https://cdn.syndication.twimg.com/*"
+    "https://cdn.syndication.twimg.com/*",
+    "https://www.youtube.com/*"
   ],
   "content_scripts": [
     {
-      "matches": ["https://x.com/*", "https://twitter.com/*"],
-      "js": ["x-intercept.js"],
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "content/x-intercept.js"
+      ],
       "run_at": "document_start",
       "world": "MAIN"
     },
     {
-      "matches": ["https://x.com/*", "https://twitter.com/*"],
-      "js": ["x-content.js"],
-      "css": ["x-content.css"],
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "content/common.js",
+        "content/x.js"
+      ],
+      "css": [
+        "content/content.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "content/common.js",
+        "content/youtube.js"
+      ],
+      "css": [
+        "content/content.css"
+      ],
       "run_at": "document_idle"
     }
   ],

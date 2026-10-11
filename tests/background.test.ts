@@ -7,15 +7,20 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 type Listener = (...args: any[]) => any;
 
-function loadBackground() {
+function loadBackground(fetchImpl: (url: string) => Promise<unknown> = async () => ({
+  ok: false,
+  status: 404,
+})) {
   const store: Record<string, unknown> = {};
   const listeners: Record<string, Listener[]> = {};
+  const sessionRules: any[] = [];
   const event = (name: string) => ({
     addListener: (fn: Listener) => (listeners[name] ||= []).push(fn),
   });
 
   const chrome = {
     runtime: {
+      id: "abcdefghijklmnop",
       onInstalled: event("onInstalled"),
       onMessage: event("onMessage"),
       getURL: (p: string) => `chrome-extension://test/${p}`,
@@ -25,6 +30,11 @@ function loadBackground() {
     contextMenus: { create: () => {}, onClicked: event("contextMenus.onClicked") },
     scripting: { executeScript: () => {} },
     tabs: { create: () => {} },
+    declarativeNetRequest: {
+      updateSessionRules: async ({ addRules }: { addRules: any[] }) => {
+        sessionRules.splice(0, sessionRules.length, ...addRules);
+      },
+    },
     storage: {
       local: {
         get: async (key: string) => ({ [key]: store[key] }),
@@ -37,7 +47,7 @@ function loadBackground() {
     chrome,
     console,
     URL,
-    fetch: async () => ({ ok: false, status: 404 }),
+    fetch: fetchImpl,
   });
   vm.runInContext(readFileSync("public/background.js", "utf8"), context);
 
@@ -47,7 +57,7 @@ function loadBackground() {
       expect(keepOpen).toBe(true);
     });
 
-  return { context, listeners, store, sendMessage };
+  return { context, listeners, store, sessionRules, sendMessage };
 }
 
 describe("background.js", () => {
@@ -65,6 +75,17 @@ describe("background.js", () => {
     ]) {
       expect(bg.listeners[name], name).toHaveLength(1);
     }
+  });
+
+  it("identifies YouTube embeds from extension pages only", () => {
+    expect(bg.sessionRules).toHaveLength(1);
+    const [rule] = bg.sessionRules;
+    expect(rule.condition.initiatorDomains).toEqual(["abcdefghijklmnop"]);
+    expect(rule.condition.resourceTypes).toEqual(["sub_frame"]);
+    expect(rule.action.requestHeaders[0]).toMatchObject({
+      header: "referer",
+      value: "https://abcdefghijklmnop.chromiumapp.org/",
+    });
   });
 
   it("picks the highest-bitrate MP4", () => {
@@ -97,5 +118,25 @@ describe("background.js", () => {
       saved: false,
     });
     expect(bg.store.watchlist).toEqual([]);
+  });
+});
+
+describe("background.js resolvers", () => {
+  it("treats YouTube items as playable without resolving", async () => {
+    const fetched: string[] = [];
+    const bg = loadBackground(async (url) => {
+      fetched.push(url);
+      return { ok: false, status: 500 };
+    });
+    const item = { id: "yt:abc", platform: "youtube", youtubeId: "abc" };
+    expect(bg.context.isPlayable(item)).toBe(true);
+    await bg.sendMessage({ type: "nlvp:toggle", item });
+    expect(fetched).toEqual([]);
+  });
+
+  it("reports X items it can't find a file for", async () => {
+    const bg = loadBackground();
+    const resolved = await bg.context.resolveItem({ id: "123" });
+    expect(resolved.resolveError).toMatch(/Couldn't find/);
   });
 });

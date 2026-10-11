@@ -1,7 +1,14 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import VideoPlayer from "./components/VideoPlayer";
 import WatchList from "./components/WatchList";
-import useWatchList, { getItemTitle } from "./hooks/useWatchList";
+import YouTubePlayer from "./components/YouTubePlayer";
+import useWatchList, {
+  PLATFORM_LABELS,
+  getAuthorLabel,
+  getItemTitle,
+  getPlatform,
+  isPlayable,
+} from "./hooks/useWatchList";
 import { formatVideoTitle } from "./utils/formatVideoTitle";
 
 // --- Reusable Props Interface ---
@@ -549,13 +556,16 @@ const App: React.FC = () => {
       setNotice("");
       let item = watchList.items.find((i) => i.id === id);
       if (!item) return;
-      if (!item.mp4) {
+      if (!isPlayable(item)) {
         setNotice("Finding the video file...");
         item = (await watchList.resolve(id)) || item;
       }
-      if (!item.mp4) {
+      const source = item.youtubeId
+        ? `https://www.youtube.com/watch?v=${item.youtubeId}`
+        : item.mp4;
+      if (!source) {
         setNotice(
-          `Couldn't find a playable file for @${item.author}'s post. It may be deleted or private. Try "Open on X".`,
+          `Couldn't find a playable file for ${getAuthorLabel(item)}'s post. It may be deleted or private. Try "Open on ${PLATFORM_LABELS[getPlatform(item)]}".`,
         );
         return;
       }
@@ -563,10 +573,23 @@ const App: React.FC = () => {
       setQueue(playQueue.includes(id) ? playQueue : [id, ...playQueue]);
       setCurrentItemId(id);
       setVideoTitle(getItemTitle(item));
-      setVideoSource(item.mp4);
+      setVideoSource(source);
     },
     [watchList],
   );
+
+  // ?item=<id> plays a saved video straight away (one tab per video).
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    if (!watchList.loaded || deepLinkHandled.current) return;
+    deepLinkHandled.current = true;
+    const id = new URLSearchParams(window.location.search).get("item");
+    if (id) playFromList(id, [id]);
+  }, [watchList.loaded, playFromList]);
+
+  const currentItem = currentItemId
+    ? watchList.items.find((i) => i.id === currentItemId)
+    : undefined;
 
   const nextItemId =
     (currentItemId && queue[queue.indexOf(currentItemId) + 1]) || null;
@@ -602,6 +625,20 @@ const App: React.FC = () => {
 
   const renderPlayer = () => {
     if (!videoSource || !playerMode) return null;
+
+    if (currentItem?.youtubeId) {
+      return (
+        <YouTubePlayer
+          key={currentItem.youtubeId}
+          videoId={currentItem.youtubeId}
+          title={videoTitle}
+          onBack={resetVideoSource}
+          onTitleChange={handleListItemTitleChange}
+          onNext={nextItemId ? playNext : undefined}
+          onFinished={handleListItemFinished}
+        />
+      );
+    }
 
     if (playerMode === "netflix") {
       const isListPlayback = Boolean(currentItemId);
