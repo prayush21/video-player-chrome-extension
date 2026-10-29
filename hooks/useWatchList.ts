@@ -9,6 +9,12 @@ import {
   putHandle,
   readVideoMeta,
 } from "../utils/localFiles";
+import {
+  CURRENT_SCHEMA_VERSION,
+  WATCHLIST_KEY,
+  WATCHLIST_SCHEMA_KEY,
+  migrateWatchList,
+} from "../utils/storageMigration";
 
 export type Platform = "x" | "youtube" | "local";
 
@@ -46,8 +52,6 @@ export interface WatchListItem {
   fileSize?: number;
 }
 
-const WATCHLIST_KEY = "watchlist";
-
 interface WatchListStorage {
   get(key: string): Promise<Record<string, unknown>>;
   set(items: Record<string, unknown>): Promise<void>;
@@ -75,6 +79,32 @@ const extensionStorage =
 
 const storage: WatchListStorage | undefined =
   extensionStorage ?? (import.meta.env.DEV ? devStorage : undefined);
+
+// Reads My List and upgrades it to the current shape (see
+// utils/storageMigration.ts). Never throws on bad data.
+async function readMigrated(store: WatchListStorage) {
+  const [list, version] = await Promise.all([
+    store.get(WATCHLIST_KEY),
+    store.get(WATCHLIST_SCHEMA_KEY),
+  ]);
+  const storedVersion = version[WATCHLIST_SCHEMA_KEY];
+  return { ...migrateWatchList(list[WATCHLIST_KEY], storedVersion), storedVersion };
+}
+
+// Writes the upgraded list back once, so storage is in the current shape.
+// Re-reads right before writing to keep the window for clobbering a
+// background write as small as possible.
+async function persistMigration(store: WatchListStorage) {
+  const latest = await readMigrated(store);
+  if (latest.changed) {
+    await store.set({
+      [WATCHLIST_KEY]: latest.items,
+      [WATCHLIST_SCHEMA_KEY]: latest.schemaVersion,
+    });
+  } else if (latest.storedVersion !== latest.schemaVersion) {
+    await store.set({ [WATCHLIST_SCHEMA_KEY]: latest.schemaVersion });
+  }
+}
 
 export const getPlatform = (item: WatchListItem): Platform =>
   item.platform || "x";
@@ -127,17 +157,24 @@ function useWatchList() {
 
   useEffect(() => {
     if (!storage) return;
-    storage.get(WATCHLIST_KEY).then((result) => {
-      setItems((result[WATCHLIST_KEY] as WatchListItem[]) || []);
-      setLoaded(true);
-    });
+    readMigrated(storage)
+      .then((result) => {
+        setItems(result.items);
+        if (result.changed || result.storedVersion !== result.schemaVersion) {
+          persistMigration(storage).catch((err) =>
+            console.warn("My List: could not save upgraded list", err),
+          );
+        }
+      })
+      .catch((err) => console.warn("My List: could not read list", err))
+      .finally(() => setLoaded(true));
 
     const handleChange = (
       changes: Record<string, chrome.storage.StorageChange>,
       area: string,
     ) => {
       if (area === "local" && changes[WATCHLIST_KEY]) {
-        setItems(changes[WATCHLIST_KEY].newValue || []);
+        setItems(migrateWatchList(changes[WATCHLIST_KEY].newValue).items);
       }
     };
     if (!extensionStorage) return;
@@ -147,15 +184,17 @@ function useWatchList() {
 
   const save = useCallback(async (next: WatchListItem[]) => {
     setItems(next);
-    await storage?.set({ [WATCHLIST_KEY]: next });
+    await storage?.set({
+      [WATCHLIST_KEY]: next,
+      [WATCHLIST_SCHEMA_KEY]: CURRENT_SCHEMA_VERSION,
+    });
   }, []);
 
   // Always read fresh from storage so we don't clobber writes made by the
   // background worker since the last render.
   const readLatest = useCallback(async (): Promise<WatchListItem[]> => {
     if (!storage) return items;
-    const result = await storage.get(WATCHLIST_KEY);
-    return (result[WATCHLIST_KEY] as WatchListItem[]) || [];
+    return (await readMigrated(storage)).items;
   }, [items]);
 
   const remove = useCallback(

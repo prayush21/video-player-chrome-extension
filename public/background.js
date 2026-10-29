@@ -148,7 +148,11 @@ function isXUrl(url) {
 
 async function getWatchList() {
   const result = await chrome.storage.local.get(WATCHLIST_KEY);
-  return result[WATCHLIST_KEY] || [];
+  // Tolerate damaged data instead of throwing; the popup upgrades entries
+  // to the current shape (utils/storageMigration.ts).
+  const list = result[WATCHLIST_KEY];
+  if (!Array.isArray(list)) return [];
+  return list.filter((i) => i && typeof i === "object" && i.id != null);
 }
 
 async function setWatchList(list) {
