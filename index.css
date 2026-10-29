@@ -2250,129 +2250,244 @@ button:hover .group-hover\/back\:opacity-100 {
    Play a file or URL - the source picker in App.tsx
    --------------------------------------------------------------------------- */
 
-.src-panel {
+.src-page {
   position: relative;
   z-index: 1;
-  width: min(640px, calc(100% - 2 * var(--wl-gutter)));
-  margin: clamp(16px, 6vh, 64px) auto 0;
-  padding: clamp(24px, 4vw, 44px);
-  border-radius: 18px;
-  background: var(--wl-surface);
-  box-shadow:
-    0 30px 80px -20px rgba(0, 0, 0, 0.8),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-  text-align: center;
-  animation: wl-rise 0.45s var(--wl-ease) both;
+  width: min(680px, 100%);
+  margin: 0 auto;
+  padding: clamp(16px, 5vh, 56px) var(--wl-gutter) 64px;
+  animation: wl-rise 0.4s var(--wl-ease) both;
+}
+.wl-page.src-view {
+  background:
+    radial-gradient(
+      900px 500px at 15% -10%,
+      rgba(229, 9, 20, 0.16),
+      transparent 60%
+    ),
+    var(--wl-bg);
+}
+.src-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wl-red);
 }
 .src-title {
-  font-size: clamp(1.6rem, 3vw, 2.3rem);
+  margin-top: 10px;
+  font-size: clamp(2rem, 5vw, 3rem);
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 .src-subtitle {
-  margin-top: 6px;
-  color: var(--wl-text-dim);
+  margin-top: 12px;
+  max-width: 46ch;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
 }
+
+/* Drop zone: solid glass surface, no dashes. */
 .src-drop {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-top: 28px;
-  padding: 28px 16px;
-  border: 1.5px dashed #4a4a4f;
-  border-radius: 14px;
+  gap: 16px 20px;
+  margin-top: 32px;
+  padding: 28px 24px;
+  min-height: 140px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.07),
+    rgba(255, 255, 255, 0.03)
+  );
   cursor: pointer;
   transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.22s var(--wl-ease),
+    box-shadow 0.22s var(--wl-ease);
 }
 .src-drop:hover {
-  border-color: #fff;
-  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.11),
+    rgba(255, 255, 255, 0.06)
+  );
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
-.src-drop .wl-glyph {
-  width: 28px;
-  height: 28px;
+.src-drop.is-dragover {
+  border-color: var(--wl-red);
+  background: rgba(229, 9, 20, 0.1);
+  box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.22);
 }
-.src-drop small {
-  color: #8c8c8c;
+.src-drop-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--wl-glass);
+  color: #fff;
 }
-.src-add {
-  width: 100%;
-  justify-content: center;
-  margin-top: 12px;
+.src-drop-icon .wl-glyph {
+  width: 24px;
+  height: 24px;
+  fill: none;
+}
+.src-drop-copy {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.src-drop-copy strong {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.src-drop-copy small {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+.src-drop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1 1 100%;
+}
+.src-pill {
+  height: 40px;
+  padding: 0 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 .src-or {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 22px 0;
-  color: #6b6b6b;
-  font-size: 0.8rem;
+  gap: 14px;
+  margin: 24px 0;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 .src-or::before,
 .src-or::after {
   content: "";
   flex: 1;
-  border-top: 1px solid #333;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 .src-form {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 .src-input {
   flex: 1;
   min-width: 0;
-  height: 44px;
-  padding: 0 18px;
-  border: 1px solid #3a3a3f;
+  height: 48px;
+  padding: 0 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
   outline: none;
-  background: #111113;
+  background: rgba(255, 255, 255, 0.07);
   color: #fff;
   font-size: 0.95rem;
-  transition: border-color 0.2s ease;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+}
+.src-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+.src-input:hover {
+  border-color: rgba(255, 255, 255, 0.25);
 }
 .src-input:focus {
   border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
-.src-prefs {
-  display: flex;
-  flex-wrap: wrap;
+.src-play {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
-  gap: 12px 24px;
-  margin-top: 26px;
-  padding-top: 22px;
-  border-top: 1px solid #2a2a2e;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #e5e5e5;
-}
-.src-pref {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.src-switch {
-  width: 44px;
-  height: 26px;
-  padding: 3px;
+  gap: 8px;
+  height: 48px;
+  padding: 0 28px;
   border: 0;
   border-radius: 999px;
-  background: #3a3a3f;
+  background: var(--wl-red);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition:
+    background-color 0.16s ease,
+    box-shadow 0.22s var(--wl-ease),
+    transform 0.15s ease;
+}
+.src-play:hover {
+  background: #f6121d;
+  box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4);
+}
+.src-play:active {
+  transform: scale(0.97);
+}
+
+/* Settings: plain rows, label and hint on the left, control on the right. */
+.src-settings {
+  margin-top: 32px;
+}
+.src-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.src-setting:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.src-setting-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.src-setting-hint {
+  margin-top: 2px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+.src-switch {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  transition: background-color 0.16s ease;
 }
 .src-switch span {
-  display: block;
+  position: absolute;
+  top: 3px;
+  left: 3px;
   width: 20px;
   height: 20px;
   border-radius: 50%;
   background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   transition: transform 0.2s var(--wl-ease);
 }
 .src-switch[aria-pressed="true"] {
@@ -2381,32 +2496,69 @@ button:hover .group-hover\/back\:opacity-100 {
 .src-switch[aria-pressed="true"] span {
   transform: translateX(18px);
 }
+/* Native select arrows sit off-centre, so draw our own chevron. */
 .src-select {
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid #3a3a3f;
+  flex: none;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 40px;
+  padding: 0 40px 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
-  background: #111113;
+  background-color: rgba(255, 255, 255, 0.08);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 12px 8px;
   color: #fff;
-  font-size: 0.88rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.16s ease;
+}
+.src-select:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+.src-select option {
+  background: #1a1a1b;
+  color: #fff;
 }
 .src-help {
-  margin-top: 18px;
-  color: #7a7a7a;
+  margin: 24px 0 20px;
+  max-width: 56ch;
+  color: rgba(255, 255, 255, 0.45);
   font-size: 0.82rem;
   line-height: 1.5;
 }
 .src-help strong {
-  color: #d0d0d0;
+  color: rgba(255, 255, 255, 0.8);
 }
-.src-demo {
-  margin-top: 18px;
+.src-page :focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+.src-input:focus-visible {
+  outline: 0;
 }
 
 @media (max-width: 520px) {
   .src-form {
     flex-direction: column;
+  }
+  .src-input {
+    flex: none;
+    width: 100%;
+  }
+  .src-play {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .src-page,
+  .src-page * {
+    transition: none;
+    animation: none;
   }
 }
 

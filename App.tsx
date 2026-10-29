@@ -469,6 +469,7 @@ const App: React.FC = () => {
   const [currentItemId, setCurrentItemId] = useState<string | null>(null);
   const [autoAdvanced, setAutoAdvanced] = useState(false);
   const [notice, setNotice] = useState("");
+  const [dragOver, setDragOver] = useState(false);
   // Opening straight into a video (?src= or ?item=) skips "Who's watching?".
   const [profile, setProfile] = useState<ProfileId | null>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -534,16 +535,18 @@ const App: React.FC = () => {
     localStorage.setItem("streamline_branding_theme", brandingTheme);
   }, [brandingTheme]);
 
+  const playLocalFile = useCallback((file: File) => {
+    if (!file.type.startsWith("video/") && file.type !== "") return;
+    setVideoSource(URL.createObjectURL(file));
+    setVideoTitle(formatVideoTitle(file.name));
+  }, []);
+
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        setVideoSource(url);
-        setVideoTitle(formatVideoTitle(file.name));
-      }
+      if (file) playLocalFile(file);
     },
-    [],
+    [playLocalFile],
   );
 
   const handleUrlSubmit = useCallback((event: React.FormEvent) => {
@@ -778,7 +781,7 @@ const App: React.FC = () => {
   };
 
   const renderSourceSelector = () => (
-    <div className="wl-page">
+    <div className="wl-page src-view">
       <header className="wl-header is-scrolled">
         <button
           className="wl-avatar-btn"
@@ -804,28 +807,70 @@ const App: React.FC = () => {
         />
       </header>
 
-      <div className="src-panel">
-        <h1 className="src-title">
-          <span style={{ color: "#e50914" }}>Netflix</span>-like Video Player
-        </h1>
+      <main className="src-page">
+        <p className="src-eyebrow">Play a file</p>
+        <h1 className="src-title">Bring your own video.</h1>
         <p className="src-subtitle">
-          Pick a file from this computer or paste a direct video link.
+          Play something from this computer or a direct link, or save files to
+          My List to binge later.
         </p>
 
-        <label htmlFor="file-upload" className="src-drop">
-          <svg viewBox="0 0 24 24" className="wl-glyph" aria-hidden="true">
-            <path
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          </svg>
-          <strong>Choose a video file</strong>
-          <small>MP4, WebM, OGG, MOV and friends</small>
-        </label>
+        <div
+          className={`src-drop ${dragOver ? "is-dragover" : ""}`}
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) playLocalFile(file);
+          }}
+        >
+          <span className="src-drop-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="wl-glyph">
+              <path
+                d="M12 16V5m0 0l-4.5 4.5M12 5l4.5 4.5M5 16v2a2 2 0 002 2h10a2 2 0 002-2v-2"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </svg>
+          </span>
+          <div className="src-drop-copy">
+            <strong>Drop a video here</strong>
+            <small>or browse your files · MP4, WebM, MKV, MOV</small>
+          </div>
+          <div className="src-drop-actions">
+            <button
+              type="button"
+              className="wl-btn wl-btn-secondary src-pill"
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+            >
+              Choose file
+            </button>
+            {isLocalFileSupported() && (
+              <button
+                type="button"
+                className="wl-btn wl-btn-secondary src-pill"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addFilesToList();
+                }}
+              >
+                + Add to My List
+              </button>
+            )}
+          </div>
+        </div>
         <input
           ref={fileInputRef}
           id="file-upload"
@@ -835,35 +880,34 @@ const App: React.FC = () => {
           onChange={handleFileChange}
         />
 
-        {isLocalFileSupported() && (
-          <button
-            type="button"
-            className="wl-btn wl-btn-secondary src-add"
-            onClick={addFilesToList}
-          >
-            + Add files to My List
-          </button>
-        )}
-
-        <div className="src-or">OR</div>
+        <div className="src-or">or</div>
 
         <form onSubmit={handleUrlSubmit} className="src-form">
           <input
             ref={urlInputRef}
             type="url"
-            placeholder="Paste a direct video URL (.mp4, .webm...)"
+            placeholder="Paste a direct video URL (.mp4, .webm…)"
             defaultValue={initialUrl}
             className="src-input"
+            aria-label="Video URL"
             required
           />
-          <button type="submit" className="wl-btn wl-btn-primary">
+          <button type="submit" className="src-play">
+            <svg viewBox="0 0 24 24" className="wl-glyph" aria-hidden="true">
+              <path d="M6 4l15 8-15 8z" />
+            </svg>
             Play
           </button>
         </form>
 
-        <div className="src-prefs">
-          <div className="src-pref">
-            <span>Show Intro</span>
+        <div className="src-settings">
+          <div className="src-setting">
+            <div>
+              <div className="src-setting-label">Show intro</div>
+              <div className="src-setting-hint">
+                Play the ta-dum before your video.
+              </div>
+            </div>
             <button
               type="button"
               className="src-switch"
@@ -879,8 +923,11 @@ const App: React.FC = () => {
               <span />
             </button>
           </div>
-          <div className="src-pref">
-            <span>Intro Theme</span>
+          <div className="src-setting">
+            <div>
+              <div className="src-setting-label">Intro theme</div>
+              <div className="src-setting-hint">Which logo sting to play.</div>
+            </div>
             <select
               value={brandingTheme}
               onChange={(e) =>
@@ -895,23 +942,25 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {watchList.items.length === 0 && (
-          <p className="src-help">
-            Tip: on X and YouTube, videos get a <strong>My List</strong>{" "}
-            button. Save while you scroll, then click this extension's icon to
-            binge them here.
-          </p>
-        )}
         <p className="src-help">
-          Only direct video file links work here. For YouTube, save the video
-          to My List instead.
+          {watchList.items.length === 0 && (
+            <>
+              On X and YouTube, videos get a <strong>My List</strong> button.
+              Save while you scroll, then click this extension's icon to binge
+              them here.{" "}
+            </>
+          )}
+          Links must point straight at a video file. For YouTube, save the
+          video to My List instead.
         </p>
-        <div className="src-demo">
-          <button className="wl-btn wl-btn-secondary" onClick={handlePlayDemo}>
-            Play Demo Video
-          </button>
-        </div>
-      </div>
+        <button
+          type="button"
+          className="wl-btn wl-btn-secondary src-pill"
+          onClick={handlePlayDemo}
+        >
+          Play demo video
+        </button>
+      </main>
     </div>
   );
 
