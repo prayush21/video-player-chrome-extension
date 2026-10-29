@@ -1,5 +1,7 @@
+/// <reference types="vitest/config" />
 import path from "path";
 import { defineConfig } from "vite";
+import { configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
 // Everything in public/ (manifest.json, background.js, the x.com content
@@ -11,6 +13,10 @@ export default defineConfig({
     host: "0.0.0.0",
   },
   plugins: [react()],
+  // e2e/*.spec.ts are Playwright tests (npm run e2e), not vitest.
+  test: {
+    exclude: [...configDefaults.exclude, "e2e/**"],
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "."),

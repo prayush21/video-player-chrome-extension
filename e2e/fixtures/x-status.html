@@ -1,0 +1,52 @@
+<!doctype html>
+<!--
+  Offline stand-in for an x.com post page, served at
+  https://x.com/e2e_user/status/1850000000000000001 via page.route.
+  Mirrors only the markup public/content/x.js reads:
+    article[data-testid=tweet]          -> findPosts()
+    a[href*=/status/] > time            -> statusLinks() (post's own id first)
+    [data-testid=videoPlayer] video     -> hasVideo() / findVideo() / poster
+    [data-testid=tweetText]             -> text
+    [data-testid=User-Name] span        -> authorName
+    [role=group] holding [data-testid=bookmark] -> mount()
+  A quoted post link adds a second candidate id, like the real page.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>E2E user on X</title>
+  </head>
+  <body>
+    <main>
+      <article data-testid="tweet">
+        <div data-testid="User-Name">
+          <a href="/e2e_user"><span>E2E Fixture User</span></a>
+          <a href="/e2e_user/status/1850000000000000001"><time datetime="2026-10-29T00:00:00.000Z">1h</time></a>
+        </div>
+        <div data-testid="tweetText">A fixture post with a video for the e2e smoke test</div>
+        <div data-testid="videoPlayer">
+          <video poster="https://pbs.twimg.com/amplify_video_thumb/1850000000000000999/img/e2e.jpg" muted playsinline></video>
+        </div>
+        <div>
+          <a href="/someone_else/status/1840000000000000002">Quoted post</a>
+        </div>
+        <div role="group" aria-label="Post actions">
+          <button data-testid="reply" type="button">Reply</button>
+          <button data-testid="like" type="button">Like</button>
+          <button data-testid="bookmark" type="button">Bookmark</button>
+        </div>
+      </article>
+    </main>
+    <script>
+      // Test-only signal: x-intercept.js (MAIN world) posts what it found in
+      // X's API responses; record it so the test knows x.js has received it.
+      window.addEventListener("message", (e) => {
+        if (e.data && e.data.source === "nlvp-intercept") {
+          document.body.dataset.intercepted = String(
+            (Number(document.body.dataset.intercepted) || 0) + e.data.media.length,
+          );
+        }
+      });
+    </script>
+  </body>
+</html>

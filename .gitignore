@@ -27,3 +27,9 @@ dist-ssr
 release
 dist-*
 *.zip
+
+# Playwright e2e output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

@@ -36,6 +36,36 @@ jobs:
           path: release/*.zip
           retention-days: 14
 
+  e2e:
+    # Loads the built extension (dist/) into real Chromium and smoke-tests the
+    # service worker, player page, demo clip, My List storage and the X /
+    # YouTube content scripts against offline fixtures (no real network).
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+      # Builds dist/ then runs Playwright. Runs headless (new headless mode
+      # supports extensions), so no xvfb is needed.
+      - run: npm run e2e
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: playwright-report-${{ github.sha }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
   version-bump:
     # A PR that changes the shipped extension should bump the version,
     # otherwise the Web Store rejects the upload (versions must increase).
