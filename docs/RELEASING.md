@@ -11,6 +11,9 @@
 
 ## Cutting a release
 
+First add the release's notes to `CHANGELOG.md` (move items from **Unreleased**
+under a new `## [X.Y.Z]` heading) and merge that to `main`. Then:
+
 ```bash
 git checkout main && git pull
 npm version minor        # or patch / major: bumps package.json + public/manifest.json, commits, tags vX.Y.Z
@@ -24,6 +27,36 @@ The `Release` workflow then:
 - creates a GitHub Release with the zip and auto-generated notes,
 - uploads the zip to the Chrome Web Store as a **draft** (once secrets are set).
   You still click **Submit for review** in the dashboard.
+
+## Trusted testers (pre-release)
+
+Before the first public rollout of a user-facing release, publish it to
+**Trusted testers** only: in the Web Store dashboard set Distribution →
+Visibility to *Trusted testers* (add tester emails under Test accounts), submit,
+and install from the store on a real profile that has the previous version, to
+confirm the update keeps My List data. Switch visibility to *Public* when happy.
+
+## Staged rollout
+
+In the Chrome Web Store dashboard, open Package → Publish and choose a
+percentage rollout rather than 100%.
+
+1. Start at about 10%.
+2. Watch the reviews and support inbox for a day or two.
+3. Raise the percentage (50%, then 100%).
+
+A rollout can be paused at any time. Versions can't be rolled back to an older
+version number (see Rolling back), so a bad release needs a fix released as a
+higher version.
+
+## Branch protection
+
+Manual GitHub UI steps (Settings → Branches → Add branch ruleset / protection rule for `main`):
+
+- Require a pull request before merging.
+- Require status checks to pass: the `check` and `e2e` CI jobs.
+- Require branches to be up to date before merging.
+- Block force pushes (and deletion of `main`).
 
 ## Permissions
 

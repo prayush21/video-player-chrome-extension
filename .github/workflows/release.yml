@@ -50,4 +50,4 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
           REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
         if: env.REFRESH_TOKEN != ''
-        run: npx --yes chrome-webstore-upload-cli@3 upload --source release/*.zip
+        run: npx --yes chrome-webstore-upload-cli@3.5.0 upload --source release/*.zip
