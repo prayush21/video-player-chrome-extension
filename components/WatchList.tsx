@@ -170,7 +170,9 @@ const WatchListCard: React.FC<{
           item={item}
           lazy
           fallback={
-            <div className="wl-card-placeholder">{getAuthorLabel(item)}</div>
+            <div className="wl-card-placeholder">
+              <span>{getAuthorLabel(item)}</span>
+            </div>
           }
         />
         <span className="wl-card-badge">
@@ -189,15 +191,23 @@ const WatchListCard: React.FC<{
         <div className="wl-card-title">{getItemTitle(item)}</div>
         <div className="wl-card-meta">
           {hasSourcePage(item) ? (
-            <a href={getSourceUrl(item)} target="_blank" rel="noreferrer">
+            <a
+              className="wl-card-author"
+              href={getSourceUrl(item)}
+              target="_blank"
+              rel="noreferrer"
+              title={getAuthorLabel(item)}
+            >
               {getAuthorLabel(item)}
             </a>
           ) : (
-            <span>{getAuthorLabel(item)}</span>
+            <span className="wl-card-author" title={getAuthorLabel(item)}>
+              {getAuthorLabel(item)}
+            </span>
           )}
-          <span> · {timeAgo(item.savedAt)}</span>
+          <span className="wl-card-when">&nbsp;· {timeAgo(item.savedAt)}</span>
           {!isPlayable(item) && (
-            <span className="wl-card-warn"> · resolving</span>
+            <span className="wl-card-warn wl-card-when"> · resolving</span>
           )}
         </div>
       </div>
@@ -413,14 +423,25 @@ const WatchList: React.FC<WatchListProps> = ({
               </span>
               {hero.watchedAt ? "From My List" : "Up next in My List"}
             </div>
-            <h1 className="wl-hero-title">{getItemTitle(hero)}</h1>
+            <h1 className="wl-hero-title" title={getItemTitle(hero)}>
+              {getItemTitle(hero)}
+            </h1>
             <div className="wl-hero-meta">
-              <span className="wl-hero-author">
+              <span
+                className="wl-hero-author is-trunc"
+                title={hero.authorName || getAuthorLabel(hero)}
+              >
                 {hero.authorName || getAuthorLabel(hero)}
               </span>
-              {getPlatform(hero) === "x" && <span>@{hero.author}</span>}
+              {getPlatform(hero) === "x" && (
+                <span className="is-trunc" title={`@${hero.author}`}>
+                  @{hero.author}
+                </span>
+              )}
               {getPlatform(hero) === "local" && hero.fileName && (
-                <span>{hero.fileName}</span>
+                <span className="is-trunc" title={hero.fileName}>
+                  {hero.fileName}
+                </span>
               )}
               {formatDuration(hero) && <span>{formatDuration(hero)}</span>}
               <span>Saved {timeAgo(hero.savedAt)}</span>
