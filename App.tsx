@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import VideoPlayer from "./components/VideoPlayer";
 import WatchList from "./components/WatchList";
 import YouTubePlayer from "./components/YouTubePlayer";
+import SaveGuide from "./components/SaveGuide";
 import ProfileGate, {
   PROFILES,
   ProfileAvatar,
@@ -437,7 +438,6 @@ const App: React.FC = () => {
   );
   const [videoSource, setVideoSource] = useState<string | null>(null);
   const [videoTitle, setVideoTitle] = useState<string>("");
-  const [initialUrl, setInitialUrl] = useState<string>("");
   const [includeBrandingClips, setIncludeBrandingClips] = useState<boolean>(
     () => {
       try {
@@ -481,14 +481,12 @@ const App: React.FC = () => {
       return null;
     }
   });
-  const urlInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const src = params.get("src");
     const mode = params.get("mode");
-    const pageUrl = params.get("pageUrl");
     const includeBrandingParam = params.get("includeBranding");
     const brandingThemeParam = params.get("brandingTheme");
 
@@ -518,9 +516,6 @@ const App: React.FC = () => {
       }
     } else if (mode === "netflix") {
       setPlayerMode("netflix");
-      if (pageUrl) {
-        setInitialUrl(pageUrl);
-      }
     }
   }, []);
 
@@ -548,23 +543,6 @@ const App: React.FC = () => {
     },
     [playLocalFile],
   );
-
-  const handleUrlSubmit = useCallback((event: React.FormEvent) => {
-    event.preventDefault();
-    const url = urlInputRef.current?.value;
-    if (url) {
-      setVideoSource(url);
-      try {
-        const urlObject = new URL(url);
-        const pathParts = urlObject.pathname.split("/");
-        setVideoTitle(
-          formatVideoTitle(pathParts[pathParts.length - 1]) || "Remote Video",
-        );
-      } catch (error) {
-        setVideoTitle("Remote Video");
-      }
-    }
-  }, []);
 
   const resetVideoSource = useCallback(() => {
     if (videoSource?.startsWith("blob:")) {
@@ -693,10 +671,10 @@ const App: React.FC = () => {
   );
 
   const handlePlayDemo = () => {
-    setVideoSource(
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    );
-    setVideoTitle("Big Buck Bunny (Demo)");
+    // Bundled in public/clips so the demo works offline. Sintel trailer,
+    // (c) Blender Foundation, CC BY 3.0.
+    setVideoSource("/clips/demo-sintel-trailer.mp4");
+    setVideoTitle("Sintel Trailer (Demo)");
   };
 
   // The "Who's watching?" choice lasts for this tab, so a reload skips it.
@@ -811,8 +789,8 @@ const App: React.FC = () => {
         <p className="src-eyebrow">Play a file</p>
         <h1 className="src-title">Bring your own video.</h1>
         <p className="src-subtitle">
-          Play something from this computer or a direct link, or save files to
-          My List to binge later.
+          Play something from this computer, or save files to My List to binge
+          later.
         </p>
 
         <div
@@ -880,25 +858,7 @@ const App: React.FC = () => {
           onChange={handleFileChange}
         />
 
-        <div className="src-or">or</div>
-
-        <form onSubmit={handleUrlSubmit} className="src-form">
-          <input
-            ref={urlInputRef}
-            type="url"
-            placeholder="Paste a direct video URL (.mp4, .webm…)"
-            defaultValue={initialUrl}
-            className="src-input"
-            aria-label="Video URL"
-            required
-          />
-          <button type="submit" className="src-play">
-            <svg viewBox="0 0 24 24" className="wl-glyph" aria-hidden="true">
-              <path d="M6 4l15 8-15 8z" />
-            </svg>
-            Play
-          </button>
-        </form>
+        <SaveGuide />
 
         <div className="src-settings">
           <div className="src-setting">
@@ -942,17 +902,6 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <p className="src-help">
-          {watchList.items.length === 0 && (
-            <>
-              On X and YouTube, videos get a <strong>My List</strong> button.
-              Save while you scroll, then click this extension's icon to binge
-              them here.{" "}
-            </>
-          )}
-          Links must point straight at a video file. For YouTube, save the
-          video to My List instead.
-        </p>
         <button
           type="button"
           className="wl-btn wl-btn-secondary src-pill"

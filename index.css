@@ -2261,6 +2261,20 @@ button:hover .group-hover\/back\:opacity-100 {
   transform: none;
   color: #bdbdbd;
 }
+.pg-firstrun {
+  margin-top: 6px;
+  color: #9a9a9a;
+  font-size: 0.9rem;
+  animation: wl-fade 0.6s ease 0.2s both;
+}
+.pg-firstrun strong {
+  color: #e50914;
+}
+/* First visit: show every tagline without hovering. */
+.pg-page.is-intro .pg-tagline {
+  opacity: 1;
+  transform: none;
+}
 .pg-profile:disabled {
   cursor: not-allowed;
 }
@@ -2414,79 +2428,127 @@ button:hover .group-hover\/back\:opacity-100 {
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
-.src-or {
+/* Where to find the My List button on X and YouTube. */
+.sg {
+  margin-top: 40px;
+  text-align: left;
+}
+.sg-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.sg-sub {
+  margin-top: 6px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.sg-sub strong {
+  color: #fff;
+}
+.sg-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.sg-card {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.sg-card figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+.sg-card figcaption strong {
+  color: #fff;
+  font-size: 0.9rem;
+}
+.sg-bar {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin: 24px 0;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  overflow: hidden;
 }
-.src-or::before,
-.src-or::after {
-  content: "";
-  flex: 1;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+.sg-bar-x {
+  background: #000;
+  border: 1px solid #2f3336;
+  justify-content: space-between;
 }
-.src-form {
-  display: flex;
+.sg-bar-yt {
+  background: #0f0f0f;
   gap: 8px;
 }
-.src-input {
-  flex: 1;
-  min-width: 0;
-  height: 48px;
-  padding: 0 20px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+.sg-ghost {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3a3d40;
+}
+.src-settings + .src-pill {
+  margin-top: 28px;
+}
+.sg-ghost.is-wide {
+  width: 56px;
+  height: 32px;
   border-radius: 999px;
-  outline: none;
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
-  font-size: 0.95rem;
-  transition:
-    border-color 0.16s ease,
-    background-color 0.16s ease;
-}
-.src-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
-.src-input:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-}
-.src-input:focus {
-  border-color: #fff;
   background: rgba(255, 255, 255, 0.1);
 }
-.src-play {
+.sg-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 48px;
-  padding: 0 28px;
-  border: 0;
+  flex: none;
+  color: #e50914;
+  font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  animation: sg-pulse 2.4s ease-in-out infinite;
+}
+.sg-btn svg {
+  width: 19px;
+  height: 19px;
+  fill: currentColor;
+}
+.sg-btn-x {
+  gap: 4px;
+  padding: 6px 10px;
   border-radius: 999px;
-  background: var(--wl-red);
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    background-color 0.16s ease,
-    box-shadow 0.22s var(--wl-ease),
-    transform 0.15s ease;
+  background: rgba(229, 9, 20, 0.12);
 }
-.src-play:hover {
-  background: #f6121d;
-  box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4);
+.sg-btn-youtube {
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f1f1;
 }
-.src-play:active {
-  transform: scale(0.97);
+.sg-btn-youtube svg {
+  color: #e50914;
 }
-
+@keyframes sg-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 9, 20, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.28);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sg-btn {
+    animation: none;
+  }
+}
 /* Settings: plain rows, label and hint on the left, control on the right. */
 .src-settings {
   margin-top: 32px;
@@ -2568,36 +2630,11 @@ button:hover .group-hover\/back\:opacity-100 {
   background: #1a1a1b;
   color: #fff;
 }
-.src-help {
-  margin: 24px 0 20px;
-  max-width: 56ch;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 0.82rem;
-  line-height: 1.5;
-}
-.src-help strong {
-  color: rgba(255, 255, 255, 0.8);
-}
 .src-page :focus-visible {
   outline: 2px solid #fff;
   outline-offset: 3px;
 }
-.src-input:focus-visible {
-  outline: 0;
-}
 
-@media (max-width: 520px) {
-  .src-form {
-    flex-direction: column;
-  }
-  .src-input {
-    flex: none;
-    width: 100%;
-  }
-  .src-play {
-    width: 100%;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .src-page,
   .src-page * {

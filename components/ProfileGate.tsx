@@ -39,7 +39,7 @@ export const PROFILES: Profile[] = [
   {
     id: "guest",
     name: "Someone Else",
-    tagline: "Play a file or a link. No judgment.",
+    tagline: "Play a file from this computer. No judgment.",
     color: "#27ae60",
     needsList: false,
   },
@@ -117,6 +117,25 @@ const subtitle = (count: number, loaded: boolean): string => {
   return `${count} saved videos, waiting patiently.`;
 };
 
+// The taglines normally appear on hover. On the very first visit they're all
+// shown, so a new user sees what each mood is for; picking any profile
+// marks the intro as seen and from then on it's hover only.
+const INTRO_SEEN_KEY = "nlvp:profileIntroSeen";
+
+const hasSeenIntro = (): boolean => {
+  try {
+    return localStorage.getItem(INTRO_SEEN_KEY) === "1";
+  } catch {
+    return true;
+  }
+};
+
+const markIntroSeen = () => {
+  try {
+    localStorage.setItem(INTRO_SEEN_KEY, "1");
+  } catch {}
+};
+
 interface ProfileGateProps {
   itemCount: number;
   loaded: boolean;
@@ -129,11 +148,13 @@ const ProfileGate: React.FC<ProfileGateProps> = ({
   onSelect,
 }) => {
   const [chosen, setChosen] = useState<ProfileId | null>(null);
+  const [showTaglines] = useState(() => !hasSeenIntro());
 
   const choose = useCallback(
     (profile: Profile) => {
       if (chosen || (profile.needsList && itemCount === 0)) return;
       setChosen(profile.id);
+      markIntroSeen();
       // Let the zoom-out play before handing over.
       window.setTimeout(() => onSelect(profile.id), 420);
     },
@@ -151,9 +172,17 @@ const ProfileGate: React.FC<ProfileGateProps> = ({
   }, [choose, loaded]);
 
   return (
-    <div className={`pg-page ${chosen ? "is-leaving" : ""}`}>
+    <div
+      className={`pg-page ${chosen ? "is-leaving" : ""} ${showTaglines ? "is-intro" : ""}`}
+    >
       <h1 className="pg-title">Who's watching?</h1>
       <p className="pg-subtitle">{subtitle(itemCount, loaded)}</p>
+      {showTaglines && (
+        <p className="pg-firstrun">
+          Save videos from X and YouTube with the <strong>My List</strong>{" "}
+          button, then binge them here.
+        </p>
+      )}
       <ul className="pg-grid">
         {PROFILES.map((profile, i) => {
           const disabled = loaded && profile.needsList && itemCount === 0;
@@ -172,7 +201,7 @@ const ProfileGate: React.FC<ProfileGateProps> = ({
                 <ProfileAvatar id={profile.id} className="pg-avatar" />
                 <span className="pg-name">{profile.name}</span>
                 <span className="pg-tagline">
-                  {disabled ? "Nothing saved yet. Go save some." : profile.tagline}
+                  {disabled ? "Save a video from X or YouTube first." : profile.tagline}
                 </span>
               </button>
             </li>
