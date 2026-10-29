@@ -3,6 +3,7 @@ import type { PlayerState } from "../hooks/usePlayerState";
 import ProgressBar from "./ProgressBar";
 import VolumeControl from "./VolumeControl";
 import SettingsMenu from "./SettingsMenu";
+import SubtitlesMenu, { SubtitlesControl } from "./SubtitlesMenu";
 import { formatTime } from "../utils/formatTime";
 import {
   PlayIcon,
@@ -13,7 +14,6 @@ import {
   PipExitIcon,
   Replay10Icon,
   Forward10Icon,
-  SubtitlesIcon2,
   MaximiseIcon,
   MinimiseIcon,
   Forward10Icon2,
@@ -30,9 +30,13 @@ interface PlayerControlsProps {
   toggleMute: () => void;
   handlePlaybackRateChange: (rate: number) => void;
   toggleFullscreen: () => void;
-  togglePip: () => void;
+  /** Omitted when picture-in-picture isn't possible (YouTube embeds). */
+  togglePip?: () => void;
   title?: string;
   videoSrc: string;
+  onNext?: () => void;
+  /** Omitted where subtitle files aren't supported (YouTube embeds). */
+  subtitles?: SubtitlesControl;
 }
 
 const NextEpisodeIcon: React.FC = () => (
@@ -54,6 +58,8 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   togglePip,
   title = "Video Title",
   videoSrc,
+  onNext,
+  subtitles,
 }) => {
   const {
     isPlaying,
@@ -117,13 +123,16 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
           >
             <Forward10Icon2 />
           </button>
-          <button
-            className="control-btn"
-            aria-label="Next episode"
-            title="Next episode"
-          >
-            <NextEpisodeIcon />
-          </button>
+          {onNext && (
+            <button
+              onClick={onNext}
+              className="control-btn"
+              aria-label="Next episode"
+              title="Next episode"
+            >
+              <NextEpisodeIcon />
+            </button>
+          )}
           <VolumeControl
             volume={volume}
             isMuted={isMuted}
@@ -139,26 +148,22 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
 
         {/* Right Controls */}
         <div className="controls-group">
-          <button
-            className="control-btn"
-            aria-label="Subtitles and audio"
-            title="Subtitles and audio"
-          >
-            <SubtitlesIcon2 />
-          </button>
+          {subtitles && <SubtitlesMenu subtitles={subtitles} />}
           <SettingsMenu
             currentRate={playbackRate}
             onRateChange={handlePlaybackRateChange}
           />
-          <button
-            onClick={togglePip}
-            className="control-btn"
-            aria-label={
-              isPipActive ? "Exit Picture-in-Picture" : "Picture-in-Picture"
-            }
-          >
-            {isPipActive ? <PipExitIcon /> : <PipEnterIcon />}
-          </button>
+          {togglePip && (
+            <button
+              onClick={togglePip}
+              className="control-btn"
+              aria-label={
+                isPipActive ? "Exit Picture-in-Picture" : "Picture-in-Picture"
+              }
+            >
+              {isPipActive ? <PipExitIcon /> : <PipEnterIcon />}
+            </button>
+          )}
           <button
             onClick={toggleFullscreen}
             className="control-btn"

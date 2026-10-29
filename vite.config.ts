@@ -1,62 +1,37 @@
+/// <reference types="vitest/config" />
 import path from "path";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
+import { configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import { copyFileSync, mkdirSync, existsSync } from "fs";
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, ".", "");
-  return {
-    server: {
-      port: 3000,
-      host: "0.0.0.0",
+// Everything in public/ (manifest.json, background.js, the x.com content
+// scripts, icons, clips) is copied to dist/ as-is. The React popup/player
+// page is built from index.html.
+export default defineConfig({
+  server: {
+    port: 3000,
+    host: "0.0.0.0",
+  },
+  plugins: [react()],
+  // e2e/*.spec.ts are Playwright tests (npm run e2e), not vitest.
+  test: {
+    exclude: [...configDefaults.exclude, "e2e/**"],
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "."),
     },
-    plugins: [
-      react(),
-      {
-        name: "copy-extension-files",
-        closeBundle() {
-          // Copy manifest.json
-          copyFileSync("manifest.json", "dist/manifest.json");
-
-          // Copy background.js
-          copyFileSync("background.js", "dist/background.js");
-
-          // Copy icons directory if it exists
-          if (existsSync("icons")) {
-            if (!existsSync("dist/icons")) {
-              mkdirSync("dist/icons", { recursive: true });
-            }
-            const iconFiles = ["icon16.png", "icon48.png", "icon128.png"];
-            iconFiles.forEach((file) => {
-              const srcPath = `icons/${file}`;
-              if (existsSync(srcPath)) {
-                copyFileSync(srcPath, `dist/icons/${file}`);
-              }
-            });
-          }
-        },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        popup: path.resolve(__dirname, "index.html"),
       },
-    ],
-    define: {
-      "process.env.API_KEY": JSON.stringify(env.GEMINI_API_KEY),
-      "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
-    },
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "."),
+      output: {
+        entryFileNames: "assets/[name].js",
+        chunkFileNames: "assets/[name].js",
+        assetFileNames: "assets/[name].[ext]",
       },
     },
-    build: {
-      rollupOptions: {
-        input: {
-          popup: path.resolve(__dirname, "index.html"),
-        },
-        output: {
-          entryFileNames: "assets/[name].js",
-          chunkFileNames: "assets/[name].js",
-          assetFileNames: "assets/[name].[ext]",
-        },
-      },
-    },
-  };
+  },
 });

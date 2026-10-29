@@ -7,6 +7,16 @@ import React, {
 } from "react";
 import usePlayerState from "../hooks/usePlayerState";
 import PlayerOverlays from "./PlayerOverlays";
+import useOverlayVisibility from "../hooks/useOverlayVisibility";
+import CaptionOverlay from "./CaptionOverlay";
+import type { SubtitlesControl } from "./SubtitlesMenu";
+import {
+  SubtitleCue,
+  decodeSubtitleFile,
+  findCue,
+  isSubtitleFile,
+  parseSubtitles,
+} from "../utils/subtitles";
 
 interface VideoPlayerProps {
   src: string;
@@ -15,6 +25,12 @@ interface VideoPlayerProps {
   onTitleChange: (title: string) => void;
   preRollSrc?: string;
   postRollSrc?: string;
+  /** Start playback as soon as the player mounts (used for My List queues). */
+  autoStart?: boolean;
+  /** When set, the controls show a "Next episode" button that calls this. */
+  onNext?: () => void;
+  /** Called once the whole sequence (pre-roll, main, post-roll) has ended. */
+  onFinished?: () => void;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -24,6 +40,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   onTitleChange,
   preRollSrc,
   postRollSrc,
+  autoStart = false,
+  onNext,
+  onFinished,
 }) => {
   type PlaybackPhase = "pre" | "main" | "post" | "done";
   type ClipPhase = Exclude<PlaybackPhase, "done">;
@@ -37,8 +56,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const controlsTimeoutRef = useRef<number | null>(null);
-  const pauseTimerRef = useRef<number | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
   const [error, setError] = useState<string>("");
   const [playbackPhase, setPlaybackPhase] =
@@ -67,9 +84,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     togglePip,
   } = usePlayerState(videoRef, playerContainerRef);
 
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const [infoOverlayVisible, setInfoOverlayVisible] = useState(true);
-  const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
+  const { controlsVisible, infoOverlayVisible, resetOverlay } =
+    useOverlayVisibility(
+      playerContainerRef,
+      playerState.isPlaying,
+      playerState.progress,
+    );
 
   const hasPreRoll = Boolean(preRollSrc);
   const hasPostRoll = Boolean(postRollSrc);
@@ -249,10 +269,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     setPlaybackPhase(nextPhase);
     setActiveSrc(nextPhase === "pre" ? preRollSrc || src : src);
     pendingSeekRef.current = null;
-    setHasStartedPlaying(false);
-    setInfoOverlayVisible(true);
+    resetOverlay();
     setError("");
-  }, [src, preRollSrc, postRollSrc, getInitialPhase]);
+  }, [src, preRollSrc, postRollSrc, getInitialPhase, resetOverlay]);
 
   useEffect(() => {
     if (playerState.isPlaying) {
@@ -280,7 +299,17 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
     setPlaybackPhase("done");
     handleEnded();
-  }, [getPhaseSrc, handleEnded, phaseOrder, playbackPhase]);
+    onFinished?.();
+  }, [getPhaseSrc, handleEnded, onFinished, phaseOrder, playbackPhase]);
+
+  const hasAutoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!autoStart || hasAutoStartedRef.current) return;
+    hasAutoStartedRef.current = true;
+    togglePlay();
+    // Only on mount: the parent remounts the player (keyed by src) per video.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
 
   const handleCompositeSeek = useCallback(
     (virtualTime: number) => {
@@ -335,19 +364,58 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     }
   }, [handleLoadedMetadata, playbackPhase]);
 
-  const hideControls = useCallback(() => {
-    if (playerState.isPlaying) {
-      setControlsVisible(false);
-    }
-  }, [playerState.isPlaying]);
 
-  const showControls = useCallback(() => {
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
+  // Subtitles loaded from an .srt/.vtt file. They belong to the main video,
+  // so they stay hidden during the intro and outro clips.
+  const [cues, setCues] = useState<SubtitleCue[]>([]);
+  const [subtitleName, setSubtitleName] = useState<string | null>(null);
+  const [subtitlesOn, setSubtitlesOn] = useState(true);
+  const [subtitleOffset, setSubtitleOffset] = useState(0);
+  const [subtitleError, setSubtitleError] = useState("");
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  const loadSubtitleFile = useCallback(async (file: File) => {
+    if (!isSubtitleFile(file)) {
+      setSubtitleError(`"${file.name}" isn't an .srt or .vtt file.`);
+      return;
     }
-    setControlsVisible(true);
-    controlsTimeoutRef.current = window.setTimeout(hideControls, 3000);
-  }, [hideControls]);
+    const parsed = parseSubtitles(decodeSubtitleFile(await file.arrayBuffer()));
+    if (!parsed.length) {
+      setSubtitleError(`Couldn't find any captions in "${file.name}".`);
+      return;
+    }
+    setCues(parsed);
+    setSubtitleName(file.name);
+    setSubtitlesOn(true);
+    setSubtitleOffset(0);
+    setSubtitleError("");
+  }, []);
+
+  const subtitles: SubtitlesControl = {
+    fileName: subtitleName,
+    enabled: subtitlesOn,
+    offset: subtitleOffset,
+    error: subtitleError,
+    onLoad: loadSubtitleFile,
+    onToggle: setSubtitlesOn,
+    onOffsetChange: (offset) => setSubtitleOffset(Math.round(offset * 10) / 10),
+  };
+
+  // C toggles subtitles, like Netflix.
+  useEffect(() => {
+    if (!cues.length) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement) return;
+      if (e.key === "c" || e.key === "C") setSubtitlesOn((on) => !on);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [cues.length]);
+
+  const activeCue =
+    subtitlesOn && playbackPhase === "main"
+      ? findCue(cues, playerState.progress - subtitleOffset)
+      : null;
 
   const handleError = useCallback(() => {
     if (playbackPhase === "pre") {
@@ -369,66 +437,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     );
   }, [playbackPhase, src, handleEnded]);
 
-  useEffect(() => {
-    const container = playerContainerRef.current;
-    if (container) {
-      container.addEventListener("mousemove", showControls);
-      container.addEventListener("mouseleave", hideControls);
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("mousemove", showControls);
-        container.removeEventListener("mouseleave", hideControls);
-      }
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    };
-  }, [showControls, hideControls]);
-
-  useEffect(() => {
-    showControls(); // show controls on initial load or state change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerState.isPlaying]);
-
-  // Handle info overlay visibility
-  useEffect(() => {
-    // Clear any existing pause timer
-    if (pauseTimerRef.current) {
-      clearTimeout(pauseTimerRef.current);
-      pauseTimerRef.current = null;
-    }
-
-    if (playerState.isPlaying) {
-      // Hide info overlay when playing
-      if (hasStartedPlaying) {
-        setInfoOverlayVisible(false);
-      } else {
-        // First play - hide overlay and mark as started
-        setHasStartedPlaying(true);
-        setInfoOverlayVisible(false);
-      }
-    } else {
-      // Video is paused
-      if (hasStartedPlaying && playerState.progress > 0) {
-        // Start 30 second timer to show info overlay
-        pauseTimerRef.current = window.setTimeout(() => {
-          setInfoOverlayVisible(true);
-        }, 5000); // 5 seconds
-      }
-      // If video hasn't started playing yet, keep overlay visible
-      if (!hasStartedPlaying) {
-        setInfoOverlayVisible(true);
-      }
-    }
-
-    return () => {
-      if (pauseTimerRef.current) {
-        clearTimeout(pauseTimerRef.current);
-      }
-    };
-  }, [playerState.isPlaying, hasStartedPlaying, playerState.progress]);
 
   if (error) {
     return (
@@ -454,6 +462,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       className="player-container"
       onDoubleClick={toggleFullscreen}
       onClick={handleContainerClick}
+      onDragOver={(e) => {
+        if (!e.dataTransfer.types.includes("Files")) return;
+        e.preventDefault();
+        setIsDraggingFile(true);
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget === e.target) setIsDraggingFile(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDraggingFile(false);
+        const file = e.dataTransfer.files[0];
+        if (file) loadSubtitleFile(file);
+      }}
     >
       <video
         ref={videoRef}
@@ -466,6 +488,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onClick={togglePlay}
         className="player-video"
       />
+
+      <CaptionOverlay cue={activeCue} raised={controlsVisible} />
+
+      {isDraggingFile && (
+        <div className="subs-drop-hint">Drop to add subtitles</div>
+      )}
 
       {/* All Player Overlays (Info, Top Bar, Controls) */}
       <PlayerOverlays
@@ -483,6 +511,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         togglePip={togglePip}
         videoSrc={activeSrc}
         onTitleChange={onTitleChange}
+        onNext={onNext}
+        subtitles={subtitles}
       />
     </div>
   );

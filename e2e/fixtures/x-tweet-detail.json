@@ -1,0 +1,58 @@
+{
+  "data": {
+    "threaded_conversation_with_injections_v2": {
+      "instructions": [
+        {
+          "type": "TimelineAddEntries",
+          "entries": [
+            {
+              "entryId": "tweet-1850000000000000001",
+              "content": {
+                "itemContent": {
+                  "tweet_results": {
+                    "result": {
+                      "rest_id": "1850000000000000001",
+                      "legacy": {
+                        "full_text": "A fixture post with a video for the e2e smoke test",
+                        "extended_entities": {
+                          "media": [
+                            {
+                              "media_key": "13_1850000000000000999",
+                              "type": "video",
+                              "expanded_url": "https://x.com/e2e_user/status/1850000000000000001/video/1",
+                              "media_url_https": "https://pbs.twimg.com/amplify_video_thumb/1850000000000000999/img/e2e.jpg",
+                              "video_info": {
+                                "aspect_ratio": [16, 9],
+                                "duration_millis": 52000,
+                                "variants": [
+                                  {
+                                    "content_type": "application/x-mpegURL",
+                                    "url": "https://video.twimg.com/amplify_video/1850000000000000999/pl/e2e.m3u8"
+                                  },
+                                  {
+                                    "bitrate": 832000,
+                                    "content_type": "video/mp4",
+                                    "url": "https://video.twimg.com/amplify_video/1850000000000000999/vid/640x360/low.mp4"
+                                  },
+                                  {
+                                    "bitrate": 2176000,
+                                    "content_type": "video/mp4",
+                                    "url": "https://video.twimg.com/amplify_video/1850000000000000999/vid/1280x720/high.mp4"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

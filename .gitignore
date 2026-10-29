@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build outputs / packaged releases
+release
+dist-*
+*.zip
+
+# Playwright e2e output
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

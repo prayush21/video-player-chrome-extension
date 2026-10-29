@@ -15,6 +15,7 @@ A high-fidelity video player Chrome extension with a sleek Netflix-inspired UI. 
   - Picture-in-Picture mode
   - Fullscreen support
   - Progress bar with seek functionality
+- **My List for X and YouTube**: Save videos while you browse and binge them back to back
 - **Context Menu Integration**: Right-click on videos or links to open in Streamline Player
 
 ## 🚀 Installation
@@ -64,7 +65,7 @@ A high-fidelity video player Chrome extension with a sleek Netflix-inspired UI. 
 
 ## 🛠️ Development
 
-**Prerequisites:** Node.js 16+
+**Prerequisites:** Node.js 20+ (see `.nvmrc`)
 
 1. **Install dependencies**:
 
@@ -87,22 +88,23 @@ A high-fidelity video player Chrome extension with a sleek Netflix-inspired UI. 
 
 ```
 streamline-player/
-├── components/          # React components
-│   ├── VideoPlayer.tsx  # Netflix-style player
-│   ├── PlayerControls.tsx
-│   ├── ProgressBar.tsx
-│   ├── VolumeControl.tsx
-│   ├── SettingsMenu.tsx
-│   └── icons.tsx
-├── hooks/              # Custom React hooks
-│   └── usePlayerState.ts
-├── utils/              # Utility functions
-│   └── formatTime.ts
-├── App.tsx             # Main app component
-├── background.js       # Chrome extension background script
-├── manifest.json       # Extension manifest
-└── index.html          # Entry point
+├── App.tsx               # Popup/player page: source picker, My List, player
+├── components/           # React components (VideoPlayer, WatchList, controls…)
+├── hooks/                # usePlayerState, useVideoPreview, useWatchList
+├── utils/                # formatTime, formatVideoTitle
+├── public/               # Copied to dist/ as-is
+│   ├── manifest.json     # Extension manifest (version kept in sync with package.json)
+│   ├── background.js     # MV3 service worker (context menu, My List storage)
+│   ├── content/          # "My List" button: common.js + one adapter per site
+│   │                     # (x.js + x-intercept.js, youtube.js)
+│   ├── icons/ clips/
+├── scripts/              # verify-dist, package, sync-version, permissions.lock.json
+├── tests/                # Vitest unit tests
+└── docs/                 # Design notes and RELEASING.md
 ```
+
+Useful scripts: `npm run release:check` (typecheck + tests + build + verify),
+`npm run package` (zip to `release/`). See [docs/RELEASING.md](docs/RELEASING.md).
 
 ## 🎨 Tech Stack
 

@@ -1,0 +1,37 @@
+<!doctype html>
+<!--
+  Offline stand-in for a YouTube watch page, served at
+  https://www.youtube.com/watch?v=e2eFixture1 via page.route.
+  Mirrors only the markup public/content/youtube.js reads:
+    location /watch?v=<id>               -> currentVideoId()
+    ytd-watch-metadata                   -> findPosts()
+    #top-level-buttons-computed          -> mount()
+    ytd-watch-metadata h1                -> title
+    ytd-channel-name a                   -> author
+    #movie_player video (no .ad-showing) -> durationMs
+  The custom elements are left undefined (plain HTMLElements); the script only
+  queries them. The <video> has no source, so durationMs is saved as null.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>E2E Fixture Video - YouTube</title>
+  </head>
+  <body>
+    <div id="movie_player" class="html5-video-player">
+      <video class="html5-main-video" muted playsinline></video>
+    </div>
+    <ytd-watch-metadata>
+      <div id="title"><h1><yt-formatted-string>E2E Fixture Video Title</yt-formatted-string></h1></div>
+      <div id="owner">
+        <ytd-channel-name><a href="/@e2e-channel">E2E Fixture Channel</a></ytd-channel-name>
+      </div>
+      <div id="actions">
+        <div id="top-level-buttons-computed">
+          <button type="button" aria-label="like this video">Like</button>
+          <button type="button" aria-label="Share">Share</button>
+        </div>
+      </div>
+    </ytd-watch-metadata>
+  </body>
+</html>

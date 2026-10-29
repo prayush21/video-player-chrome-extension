@@ -1,0 +1,20 @@
+{
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "declarativeNetRequestWithHostAccess",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://cdn.syndication.twimg.com/*",
+    "https://twitter.com/*",
+    "https://www.youtube.com/*",
+    "https://x.com/*"
+  ],
+  "content_script_matches": [
+    "https://twitter.com/*",
+    "https://www.youtube.com/*",
+    "https://x.com/*"
+  ]
+}

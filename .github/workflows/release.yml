@@ -1,0 +1,53 @@
+name: Release
+
+# Triggered by pushing a tag created with `npm version <patch|minor|major>`
+# (which also bumps public/manifest.json) followed by `git push --follow-tags`.
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Tag must match manifest version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(jq -r .version public/manifest.json)
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::Tag v$tag does not match manifest version $manifest"
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run release:check
+      - run: npm run package
+
+      - name: GitHub release with the zip attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/*.zip \
+            --title "$GITHUB_REF_NAME" --generate-notes
+
+      # Uploads a new draft to the Chrome Web Store. It is NOT published: you
+      # still press "Submit for review" in the dashboard. Skipped until the
+      # CWS_* secrets are configured (see docs/RELEASING.md).
+      - name: Upload to Chrome Web Store (draft)
+        env:
+          EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        if: env.REFRESH_TOKEN != ''
+        run: npx --yes chrome-webstore-upload-cli@3.5.0 upload --source release/*.zip

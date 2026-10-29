@@ -1,6 +1,28 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import VideoPlayer from "./components/VideoPlayer";
+import WatchList from "./components/WatchList";
+import YouTubePlayer from "./components/YouTubePlayer";
+import SaveGuide from "./components/SaveGuide";
+import ProfileGate, {
+  PROFILES,
+  ProfileAvatar,
+  ProfileId,
+} from "./components/ProfileGate";
+import useWatchList, {
+  PLATFORM_LABELS,
+  getAuthorLabel,
+  getItemTitle,
+  getPlatform,
+  isLocal,
+  isPlayable,
+} from "./hooks/useWatchList";
 import { formatVideoTitle } from "./utils/formatVideoTitle";
+import {
+  ensureReadPermission,
+  getHandle,
+  isLocalFileSupported,
+  pickVideoFiles,
+} from "./utils/localFiles";
 
 // --- Reusable Props Interface ---
 interface VideoPlayerProps {
@@ -122,6 +144,8 @@ const InstaPlayer: React.FC<VideoPlayerProps> = ({ src, title, onBack }) => {
 */
 
 // --- Main App Component ---
+
+const PROFILE_KEY = "nlvp:profile";
 
 // Inline styles to replace Tailwind CSS
 const styles = {
@@ -414,7 +438,6 @@ const App: React.FC = () => {
   );
   const [videoSource, setVideoSource] = useState<string | null>(null);
   const [videoTitle, setVideoTitle] = useState<string>("");
-  const [initialUrl, setInitialUrl] = useState<string>("");
   const [includeBrandingClips, setIncludeBrandingClips] = useState<boolean>(
     () => {
       try {
@@ -439,14 +462,31 @@ const App: React.FC = () => {
       return "netflix";
     }
   });
-  const urlInputRef = useRef<HTMLInputElement>(null);
+  const watchList = useWatchList();
+  const [view, setView] = useState<"list" | "source">("list");
+  // Ids of the My List videos being played back to back, and the current one.
+  const [queue, setQueue] = useState<string[]>([]);
+  const [currentItemId, setCurrentItemId] = useState<string | null>(null);
+  const [autoAdvanced, setAutoAdvanced] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  // Opening straight into a video (?src= or ?item=) skips "Who's watching?".
+  const [profile, setProfile] = useState<ProfileId | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("item") || params.get("src")) return "curator";
+    try {
+      const saved = sessionStorage.getItem(PROFILE_KEY);
+      return PROFILES.some((p) => p.id === saved) ? (saved as ProfileId) : null;
+    } catch {
+      return null;
+    }
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const src = params.get("src");
     const mode = params.get("mode");
-    const pageUrl = params.get("pageUrl");
     const includeBrandingParam = params.get("includeBranding");
     const brandingThemeParam = params.get("brandingTheme");
 
@@ -476,9 +516,6 @@ const App: React.FC = () => {
       }
     } else if (mode === "netflix") {
       setPlayerMode("netflix");
-      if (pageUrl) {
-        setInitialUrl(pageUrl);
-      }
     }
   }, []);
 
@@ -493,34 +530,19 @@ const App: React.FC = () => {
     localStorage.setItem("streamline_branding_theme", brandingTheme);
   }, [brandingTheme]);
 
+  const playLocalFile = useCallback((file: File) => {
+    if (!file.type.startsWith("video/") && file.type !== "") return;
+    setVideoSource(URL.createObjectURL(file));
+    setVideoTitle(formatVideoTitle(file.name));
+  }, []);
+
   const handleFileChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        setVideoSource(url);
-        setVideoTitle(formatVideoTitle(file.name));
-      }
+      if (file) playLocalFile(file);
     },
-    [],
+    [playLocalFile],
   );
-
-  const handleUrlSubmit = useCallback((event: React.FormEvent) => {
-    event.preventDefault();
-    const url = urlInputRef.current?.value;
-    if (url) {
-      setVideoSource(url);
-      try {
-        const urlObject = new URL(url);
-        const pathParts = urlObject.pathname.split("/");
-        setVideoTitle(
-          formatVideoTitle(pathParts[pathParts.length - 1]) || "Remote Video",
-        );
-      } catch (error) {
-        setVideoTitle("Remote Video");
-      }
-    }
-  }, []);
 
   const resetVideoSource = useCallback(() => {
     if (videoSource?.startsWith("blob:")) {
@@ -528,37 +550,204 @@ const App: React.FC = () => {
     }
     setVideoSource(null);
     setVideoTitle("");
+    setCurrentItemId(null);
+    setQueue([]);
     if (fileInputRef.current) fileInputRef.current.value = "";
     // Use history.pushState to clean the URL without reloading the page
     window.history.pushState({}, "", window.location.pathname);
   }, [videoSource]);
 
+  // Turns a saved local file into a playable blob URL, or says why not.
+  const openLocalFile = useCallback(async (id: string) => {
+    try {
+      const handle = await getHandle(id);
+      if (!handle) {
+        setNotice("This file's link was lost. Remove it and add it again.");
+        return null;
+      }
+      if (!(await ensureReadPermission(handle))) {
+        setNotice("Chrome needs permission to read this file. Click Play again.");
+        return null;
+      }
+      return URL.createObjectURL(await handle.getFile());
+    } catch (err) {
+      const name = (err as DOMException).name;
+      setNotice(
+        name === "NotFoundError"
+          ? "That file was moved or deleted. Remove it from My List and add it again."
+          : name === "SecurityError"
+            ? "Click Play on the file to let Chrome open it."
+            : "Couldn't open that file.",
+      );
+      return null;
+    }
+  }, []);
+
+  const addFilesToList = useCallback(async () => {
+    try {
+      const handles = await pickVideoFiles();
+      if (!handles.length) return;
+      const added = await watchList.addLocalFiles(handles);
+      setNotice(
+        added
+          ? `Added ${added} ${added === 1 ? "file" : "files"} to My List.`
+          : "Already in My List.",
+      );
+      setView("list");
+    } catch {
+      setNotice("Couldn't add that file.");
+      setView("list");
+    }
+  }, [watchList]);
+
+  const playFromList = useCallback(
+    async (id: string, playQueue: string[]) => {
+      setNotice("");
+      let item = watchList.items.find((i) => i.id === id);
+      if (!item) return;
+      let source: string | null | undefined;
+      if (isLocal(item)) {
+        source = await openLocalFile(id);
+        if (!source) return;
+      } else {
+        if (!isPlayable(item)) {
+          setNotice("Finding the video file...");
+          item = (await watchList.resolve(id)) || item;
+        }
+        source = item.youtubeId
+          ? `https://www.youtube.com/watch?v=${item.youtubeId}`
+          : item.mp4;
+      }
+      if (!source) {
+        setNotice(
+          `Couldn't find a playable file for ${getAuthorLabel(item)}'s post. It may be deleted or private. Try "Open on ${PLATFORM_LABELS[getPlatform(item)]}".`,
+        );
+        return;
+      }
+      setNotice("");
+      if (videoSource?.startsWith("blob:")) URL.revokeObjectURL(videoSource);
+      setQueue(playQueue.includes(id) ? playQueue : [id, ...playQueue]);
+      setCurrentItemId(id);
+      setVideoTitle(getItemTitle(item));
+      setVideoSource(source);
+    },
+    [watchList, videoSource, openLocalFile],
+  );
+
+  // ?item=<id> plays a saved video straight away (one tab per video).
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    if (!watchList.loaded || deepLinkHandled.current) return;
+    deepLinkHandled.current = true;
+    const id = new URLSearchParams(window.location.search).get("item");
+    if (id) playFromList(id, [id]);
+  }, [watchList.loaded, playFromList]);
+
+  const currentItem = currentItemId
+    ? watchList.items.find((i) => i.id === currentItemId)
+    : undefined;
+
+  const nextItemId =
+    (currentItemId && queue[queue.indexOf(currentItemId) + 1]) || null;
+
+  const playNext = useCallback(() => {
+    if (!nextItemId) return;
+    setAutoAdvanced(true);
+    playFromList(nextItemId, queue);
+  }, [nextItemId, playFromList, queue]);
+
+  const handleListItemFinished = useCallback(() => {
+    if (!currentItemId) return;
+    watchList.update(currentItemId, { watchedAt: Date.now() });
+    playNext();
+  }, [currentItemId, playNext, watchList]);
+
+  const handleListItemTitleChange = useCallback(
+    (title: string) => {
+      setVideoTitle(title);
+      if (currentItemId) watchList.update(currentItemId, { title });
+    },
+    [currentItemId, watchList],
+  );
+
   const handlePlayDemo = () => {
-    setVideoSource(
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    );
-    setVideoTitle("Big Buck Bunny (Demo)");
+    // Bundled in public/clips so the demo works offline. Sintel trailer,
+    // (c) Blender Foundation, CC BY 3.0.
+    setVideoSource("/clips/demo-sintel-trailer.mp4");
+    setVideoTitle("Sintel Trailer (Demo)");
   };
 
+  // The "Who's watching?" choice lasts for this tab, so a reload skips it.
+  const selectProfile = useCallback(
+    (id: ProfileId) => {
+      setProfile(id);
+      try {
+        sessionStorage.setItem(PROFILE_KEY, id);
+      } catch {}
+      const unwatched = watchList.items.filter((i) => !i.watchedAt);
+      const queueIds = (unwatched.length ? unwatched : watchList.items).map(
+        (i) => i.id,
+      );
+      if (id === "binger" && queueIds.length) {
+        playFromList(queueIds[0], queueIds);
+      } else if (id === "justone" && queueIds.length) {
+        playFromList(queueIds[0], [queueIds[0]]);
+      } else {
+        setView(id === "guest" ? "source" : "list");
+      }
+    },
+    [playFromList, watchList.items],
+  );
+
+  const switchProfile = useCallback(() => {
+    setProfile(null);
+    setView("list");
+    try {
+      sessionStorage.removeItem(PROFILE_KEY);
+    } catch {}
+  }, []);
+
   const selectedBrandingClips = BRANDING_CLIP_PATHS[brandingTheme];
+  // "Just One" means no ta-dum.
+  const introEnabled = includeBrandingClips && profile !== "justone";
 
   const renderPlayer = () => {
     if (!videoSource || !playerMode) return null;
 
+    if (currentItem?.youtubeId) {
+      return (
+        <YouTubePlayer
+          key={currentItem.youtubeId}
+          videoId={currentItem.youtubeId}
+          title={videoTitle}
+          onBack={resetVideoSource}
+          onTitleChange={handleListItemTitleChange}
+          onNext={nextItemId ? playNext : undefined}
+          onFinished={handleListItemFinished}
+        />
+      );
+    }
+
     if (playerMode === "netflix") {
+      const isListPlayback = Boolean(currentItemId);
+      // In a My List queue, only play the intro before the first video and
+      // the outro after the last one.
+      const showPreRoll = introEnabled && !(isListPlayback && autoAdvanced);
+      const showPostRoll = introEnabled && !(isListPlayback && nextItemId);
       return (
         <VideoPlayer
           key={videoSource}
           src={videoSource}
           title={videoTitle}
           onBack={resetVideoSource}
-          onTitleChange={setVideoTitle}
-          preRollSrc={
-            includeBrandingClips ? selectedBrandingClips.pre : undefined
+          onTitleChange={
+            isListPlayback ? handleListItemTitleChange : setVideoTitle
           }
-          postRollSrc={
-            includeBrandingClips ? selectedBrandingClips.post : undefined
-          }
+          preRollSrc={showPreRoll ? selectedBrandingClips.pre : undefined}
+          postRollSrc={showPostRoll ? selectedBrandingClips.post : undefined}
+          autoStart={isListPlayback}
+          onNext={nextItemId ? playNext : undefined}
+          onFinished={isListPlayback ? handleListItemFinished : undefined}
         />
       );
     }
@@ -570,191 +759,157 @@ const App: React.FC = () => {
   };
 
   const renderSourceSelector = () => (
-    <div style={styles.mainContainer}>
-      <div style={styles.contentWrapper}>
-        <div style={styles.iconContainer}>
-          {/* <img
-            src="/n-player-logo.png"
-            alt="N Player logo"
-            style={styles.logoSmall}
-          /> */}
-          <h1
-            style={{
-              ...styles.title,
-              fontSize: window.innerWidth >= 768 ? "3rem" : "2.25rem",
-            }}
-          >
-            <span style={{ color: "#B20710" }}>Netflix</span>-like Video Player
-          </h1>
-        </div>
-        <p
-          style={{
-            ...styles.subtitle,
-            fontSize: window.innerWidth >= 768 ? "1.25rem" : "1.125rem",
-          }}
+    <div className="wl-page src-view">
+      <header className="wl-header is-scrolled">
+        <button
+          className="wl-avatar-btn"
+          onClick={switchProfile}
+          title="Switch profile"
+          aria-label="Switch profile"
         >
-          Select a device file or enter a direct video URL.
+          <ProfileAvatar id={profile || "guest"} className="wl-avatar" />
+        </button>
+        <nav className="wl-nav">
+          {watchList.items.length > 0 && (
+            <button className="wl-nav-pill" onClick={() => setView("list")}>
+              My List
+            </button>
+          )}
+          <button className="wl-nav-pill is-active">Play a file</button>
+        </nav>
+        <img
+          className="wl-brand"
+          src="/n-player-wordmark.png"
+          alt="N Player"
+          draggable={false}
+        />
+      </header>
+
+      <main className="src-page">
+        <p className="src-eyebrow">Play a file</p>
+        <h1 className="src-title">Bring your own video.</h1>
+        <p className="src-subtitle">
+          Play something from this computer, or save files to My List to binge
+          later.
         </p>
 
-        <div style={styles.formContainer}>
-          <div>
-            <label
-              htmlFor="file-upload"
-              style={styles.uploadLabel}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#b91c1c";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#dc2626";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                style={styles.uploadIcon}
-                fill="none"
-                viewBox="0 0 24 24"
+        <div
+          className={`src-drop ${dragOver ? "is-dragover" : ""}`}
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) playLocalFile(file);
+          }}
+        >
+          <span className="src-drop-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" className="wl-glyph">
+              <path
+                d="M12 16V5m0 0l-4.5 4.5M12 5l4.5 4.5M5 16v2a2 2 0 002 2h10a2 2 0 002-2v-2"
                 stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </svg>
+          </span>
+          <div className="src-drop-copy">
+            <strong>Drop a video here</strong>
+            <small>or browse your files · MP4, WebM, MKV, MOV</small>
+          </div>
+          <div className="src-drop-actions">
+            <button
+              type="button"
+              className="wl-btn wl-btn-secondary src-pill"
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+            >
+              Choose file
+            </button>
+            {isLocalFileSupported() && (
+              <button
+                type="button"
+                className="wl-btn wl-btn-secondary src-pill"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addFilesToList();
+                }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                />
-              </svg>
-              Play a Video File from Your Computer
-            </label>
-            <input
-              ref={fileInputRef}
-              id="file-upload"
-              type="file"
-              style={{ display: "none" }}
-              accept="video/*"
-              onChange={handleFileChange}
-            />
-            <p style={styles.helpText}>MP4, WebM, OGG, MOV, etc.</p>
-          </div>
-
-          <div style={styles.dividerContainer}>
-            <span style={styles.dividerLine}></span>
-            <span style={styles.dividerText}>OR</span>
-            <span style={styles.dividerLine}></span>
-          </div>
-
-          <form
-            onSubmit={handleUrlSubmit}
-            style={{
-              ...styles.form,
-              flexDirection: window.innerWidth >= 640 ? "row" : "column",
-            }}
-          >
-            <input
-              ref={urlInputRef}
-              type="url"
-              placeholder="Paste a direct video URL..."
-              defaultValue={initialUrl}
-              style={styles.input}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#dc2626")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "#374151")}
-              required
-            />
-            <button
-              type="submit"
-              style={styles.submitButton}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#374151";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#4b5563";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              Play from URL
-            </button>
-          </form>
-
-          <div style={styles.preferencePanel}>
-            <div style={styles.preferenceControlsRow}>
-              <div style={styles.preferenceControlItem}>
-                <span style={styles.preferenceInlineLabel}>Show Intro</span>
-                <button
-                  type="button"
-                  onClick={() => setIncludeBrandingClips((prev) => !prev)}
-                  style={{
-                    ...styles.toggleSwitch,
-                    ...(includeBrandingClips ? styles.toggleSwitchActive : {}),
-                  }}
-                  aria-pressed={includeBrandingClips}
-                  aria-label="Show Intro"
-                  title={
-                    includeBrandingClips
-                      ? "Intro/outro enabled"
-                      : "Intro/outro disabled"
-                  }
-                >
-                  <span
-                    style={{
-                      ...styles.toggleKnob,
-                      ...(includeBrandingClips ? styles.toggleKnobActive : {}),
-                    }}
-                  />
-                </button>
-              </div>
-
-              <div style={styles.preferenceControlItem}>
-                <span style={styles.preferenceInlineLabel}>
-                  Choose Intro Theme
-                </span>
-                <select
-                  value={brandingTheme}
-                  onChange={(e) =>
-                    setBrandingTheme(e.target.value as BrandingTheme)
-                  }
-                  style={{
-                    backgroundColor: "#111827",
-                    color: "#f9fafb",
-                    border: "1px solid #4b5563",
-                    borderRadius: "0.5rem",
-                    padding: "0.45rem 0.75rem",
-                    fontSize: "0.9rem",
-                    cursor: "pointer",
-                  }}
-                  aria-label="Choose Intro Theme"
-                >
-                  <option value="netflix">Netflix</option>
-                  <option value="hbo">HBO</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <p style={styles.helpText}>
-            Note: Only direct video file URLs (e.g., .mp4) are supported.
-            <br />
-            Links from pages like YouTube or Vimeo will not work.
-          </p>
-
-          <div style={styles.demoContainer}>
-            <button
-              onClick={handlePlayDemo}
-              style={styles.demoButton}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#047857";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#059669";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              Play Demo Video
-            </button>
+                + Add to My List
+              </button>
+            )}
           </div>
         </div>
-      </div>
+        <input
+          ref={fileInputRef}
+          id="file-upload"
+          type="file"
+          style={{ display: "none" }}
+          accept="video/*"
+          onChange={handleFileChange}
+        />
+
+        <SaveGuide />
+
+        <div className="src-settings">
+          <div className="src-setting">
+            <div>
+              <div className="src-setting-label">Show intro</div>
+              <div className="src-setting-hint">
+                Play the ta-dum before your video.
+              </div>
+            </div>
+            <button
+              type="button"
+              className="src-switch"
+              onClick={() => setIncludeBrandingClips((prev) => !prev)}
+              aria-pressed={includeBrandingClips}
+              aria-label="Show Intro"
+              title={
+                includeBrandingClips
+                  ? "Intro/outro enabled"
+                  : "Intro/outro disabled"
+              }
+            >
+              <span />
+            </button>
+          </div>
+          <div className="src-setting">
+            <div>
+              <div className="src-setting-label">Intro theme</div>
+              <div className="src-setting-hint">Which logo sting to play.</div>
+            </div>
+            <select
+              value={brandingTheme}
+              onChange={(e) =>
+                setBrandingTheme(e.target.value as BrandingTheme)
+              }
+              className="src-select"
+              aria-label="Choose Intro Theme"
+            >
+              <option value="netflix">Netflix</option>
+              <option value="hbo">HBO</option>
+            </select>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="wl-btn wl-btn-secondary src-pill"
+          onClick={handlePlayDemo}
+        >
+          Play demo video
+        </button>
+      </main>
     </div>
   );
 
@@ -832,6 +987,31 @@ const App: React.FC = () => {
   );
 
   if (videoSource) return renderPlayer();
+  if (!profile) {
+    return (
+      <ProfileGate
+        itemCount={watchList.items.length}
+        loaded={watchList.loaded}
+        onSelect={selectProfile}
+      />
+    );
+  }
+  if (view === "list" && watchList.items.length > 0) {
+    return (
+      <>
+        <WatchList
+          items={watchList.items}
+          profile={profile}
+          onPlay={playFromList}
+          onRemove={watchList.remove}
+          onOpenSource={() => setView("source")}
+          onAddFiles={isLocalFileSupported() ? addFilesToList : undefined}
+          onSwitchProfile={switchProfile}
+        />
+        {notice && <div className="wl-notice">{notice}</div>}
+      </>
+    );
+  }
   return renderSourceSelector();
 };
 
