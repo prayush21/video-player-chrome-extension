@@ -3,15 +3,20 @@ import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 /**
  * Netflix-style overlay timing shared by both players: controls appear on
  * mouse move and hide after 3s of playback; the title/info card shows before
- * the first play and again after 5s paused.
+ * the first play and again after 5s paused. `firstPlayHoldMs` keeps the
+ * shadows, controls and info card up that much longer on the first play, e.g.
+ * so YouTube's own UI can fade out first.
  */
 const useOverlayVisibility = (
   containerRef: RefObject<HTMLElement | null>,
   isPlaying: boolean,
   progress: number,
+  firstPlayHoldMs = 0,
 ) => {
   const controlsTimeoutRef = useRef<number | null>(null);
   const pauseTimerRef = useRef<number | null>(null);
+  const infoHideTimerRef = useRef<number | null>(null);
+  const firstPlayHoldPendingRef = useRef(true);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [infoOverlayVisible, setInfoOverlayVisible] = useState(true);
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false);
@@ -26,8 +31,13 @@ const useOverlayVisibility = (
       clearTimeout(controlsTimeoutRef.current);
     }
     setControlsVisible(true);
-    controlsTimeoutRef.current = window.setTimeout(hideControls, 3000);
-  }, [hideControls]);
+    let delay = 3000;
+    if (isPlaying && firstPlayHoldPendingRef.current) {
+      firstPlayHoldPendingRef.current = false;
+      delay += firstPlayHoldMs;
+    }
+    controlsTimeoutRef.current = window.setTimeout(hideControls, delay);
+  }, [hideControls, isPlaying, firstPlayHoldMs]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -59,6 +69,10 @@ const useOverlayVisibility = (
       clearTimeout(pauseTimerRef.current);
       pauseTimerRef.current = null;
     }
+    if (infoHideTimerRef.current) {
+      clearTimeout(infoHideTimerRef.current);
+      infoHideTimerRef.current = null;
+    }
 
     if (isPlaying) {
       // Hide info overlay when playing
@@ -67,7 +81,14 @@ const useOverlayVisibility = (
       } else {
         // First play - hide overlay and mark as started
         setHasStartedPlaying(true);
-        setInfoOverlayVisible(false);
+        if (firstPlayHoldMs > 0) {
+          infoHideTimerRef.current = window.setTimeout(
+            () => setInfoOverlayVisible(false),
+            firstPlayHoldMs,
+          );
+        } else {
+          setInfoOverlayVisible(false);
+        }
       }
     } else {
       // Video is paused
@@ -87,12 +108,13 @@ const useOverlayVisibility = (
         clearTimeout(pauseTimerRef.current);
       }
     };
-  }, [isPlaying, hasStartedPlaying, progress]);
+  }, [isPlaying, hasStartedPlaying, progress, firstPlayHoldMs]);
 
   // For when the player switches to a new video.
   const resetOverlay = useCallback(() => {
     setHasStartedPlaying(false);
     setInfoOverlayVisible(true);
+    firstPlayHoldPendingRef.current = true;
   }, []);
 
   return { controlsVisible, infoOverlayVisible, resetOverlay };

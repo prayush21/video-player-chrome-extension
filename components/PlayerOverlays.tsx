@@ -3,6 +3,7 @@ import type { PlayerState } from "../hooks/usePlayerState";
 import PlayerControls from "./PlayerControls";
 import VideoInfoOverlay from "./VideoInfoOverlay";
 import { BackIcon } from "./icons";
+import type { SubtitlesControl } from "./SubtitlesMenu";
 
 interface PlayerOverlaysProps {
   title: string;
@@ -20,6 +21,7 @@ interface PlayerOverlaysProps {
   videoSrc: string;
   onTitleChange: (title: string) => void;
   onNext?: () => void;
+  subtitles?: SubtitlesControl;
 }
 
 const PlayerOverlays: React.FC<PlayerOverlaysProps> = ({
@@ -38,6 +40,7 @@ const PlayerOverlays: React.FC<PlayerOverlaysProps> = ({
   videoSrc,
   onTitleChange,
   onNext,
+  subtitles,
 }) => {
   const handleInfoOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Toggle play/pause when clicking anywhere on the info overlay
@@ -90,6 +93,7 @@ const PlayerOverlays: React.FC<PlayerOverlaysProps> = ({
           title={title}
           videoSrc={videoSrc}
           onNext={onNext}
+          subtitles={subtitles}
         />
       </div>
     </>

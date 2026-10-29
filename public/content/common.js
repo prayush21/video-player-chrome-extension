@@ -75,12 +75,19 @@
         type: "nlvp:toggle",
         item: { platform: adapter.platform, ...item },
       });
-      if (res?.saved)
+      if (!res) throw new Error("No response from the extension.");
+      if (res.error) throw new Error(res.error);
+      if (res.saved)
         toast("Saved to My List. Click the extension icon to watch.");
-      else if (res && !res.saved) toast("Removed from My List.");
+      else toast("Removed from My List.");
     } catch (err) {
       console.warn("My List:", err);
-      toast("Extension was updated. Refresh the page to keep saving.");
+      const msg = String(err && err.message ? err.message : err);
+      toast(
+        /context invalidated|receiving end/i.test(msg)
+          ? "Extension was updated. Refresh the page to keep saving."
+          : `Couldn't save: ${msg}`,
+      );
     } finally {
       btn.disabled = false;
     }

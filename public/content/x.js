@@ -112,7 +112,13 @@
       ),
     getIds: (article) => statusLinks(article).map((l) => l.id),
     mount: (article, btn) => {
-      const bar = [...article.querySelectorAll("[role='group']")].pop();
+      // The action bar is the group holding the bookmark button; fall back to
+      // the last group in case X renames it.
+      const bar =
+        article
+          .querySelector("[data-testid='bookmark'], [data-testid='removeBookmark']")
+          ?.closest("[role='group']") ||
+        [...article.querySelectorAll("[role='group']")].pop();
       if (!bar) return false;
       bar.appendChild(btn);
       return true;

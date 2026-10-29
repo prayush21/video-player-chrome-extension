@@ -18,6 +18,10 @@ interface YouTubePlayerProps {
   onFinished?: () => void;
 }
 
+// Keep our shadows and controls up a bit after the first play so YouTube's own
+// title bar and controls fade out first.
+const YOUTUBE_FIRST_PLAY_HOLD_MS = 2000;
+
 const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   videoId,
   title,
@@ -44,6 +48,7 @@ const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     containerRef,
     playerState.isPlaying,
     playerState.progress,
+    YOUTUBE_FIRST_PLAY_HOLD_MS,
   );
 
   const params = new URLSearchParams({

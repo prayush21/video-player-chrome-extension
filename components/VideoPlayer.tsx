@@ -8,6 +8,15 @@ import React, {
 import usePlayerState from "../hooks/usePlayerState";
 import PlayerOverlays from "./PlayerOverlays";
 import useOverlayVisibility from "../hooks/useOverlayVisibility";
+import CaptionOverlay from "./CaptionOverlay";
+import type { SubtitlesControl } from "./SubtitlesMenu";
+import {
+  SubtitleCue,
+  decodeSubtitleFile,
+  findCue,
+  isSubtitleFile,
+  parseSubtitles,
+} from "../utils/subtitles";
 
 interface VideoPlayerProps {
   src: string;
@@ -356,6 +365,58 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [handleLoadedMetadata, playbackPhase]);
 
 
+  // Subtitles loaded from an .srt/.vtt file. They belong to the main video,
+  // so they stay hidden during the intro and outro clips.
+  const [cues, setCues] = useState<SubtitleCue[]>([]);
+  const [subtitleName, setSubtitleName] = useState<string | null>(null);
+  const [subtitlesOn, setSubtitlesOn] = useState(true);
+  const [subtitleOffset, setSubtitleOffset] = useState(0);
+  const [subtitleError, setSubtitleError] = useState("");
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  const loadSubtitleFile = useCallback(async (file: File) => {
+    if (!isSubtitleFile(file)) {
+      setSubtitleError(`"${file.name}" isn't an .srt or .vtt file.`);
+      return;
+    }
+    const parsed = parseSubtitles(decodeSubtitleFile(await file.arrayBuffer()));
+    if (!parsed.length) {
+      setSubtitleError(`Couldn't find any captions in "${file.name}".`);
+      return;
+    }
+    setCues(parsed);
+    setSubtitleName(file.name);
+    setSubtitlesOn(true);
+    setSubtitleOffset(0);
+    setSubtitleError("");
+  }, []);
+
+  const subtitles: SubtitlesControl = {
+    fileName: subtitleName,
+    enabled: subtitlesOn,
+    offset: subtitleOffset,
+    error: subtitleError,
+    onLoad: loadSubtitleFile,
+    onToggle: setSubtitlesOn,
+    onOffsetChange: (offset) => setSubtitleOffset(Math.round(offset * 10) / 10),
+  };
+
+  // C toggles subtitles, like Netflix.
+  useEffect(() => {
+    if (!cues.length) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement) return;
+      if (e.key === "c" || e.key === "C") setSubtitlesOn((on) => !on);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [cues.length]);
+
+  const activeCue =
+    subtitlesOn && playbackPhase === "main"
+      ? findCue(cues, playerState.progress - subtitleOffset)
+      : null;
+
   const handleError = useCallback(() => {
     if (playbackPhase === "pre") {
       // If intro clip is missing, continue with main content.
@@ -401,6 +462,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
       className="player-container"
       onDoubleClick={toggleFullscreen}
       onClick={handleContainerClick}
+      onDragOver={(e) => {
+        if (!e.dataTransfer.types.includes("Files")) return;
+        e.preventDefault();
+        setIsDraggingFile(true);
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget === e.target) setIsDraggingFile(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDraggingFile(false);
+        const file = e.dataTransfer.files[0];
+        if (file) loadSubtitleFile(file);
+      }}
     >
       <video
         ref={videoRef}
@@ -413,6 +488,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         onClick={togglePlay}
         className="player-video"
       />
+
+      <CaptionOverlay cue={activeCue} raised={controlsVisible} />
+
+      {isDraggingFile && (
+        <div className="subs-drop-hint">Drop to add subtitles</div>
+      )}
 
       {/* All Player Overlays (Info, Top Bar, Controls) */}
       <PlayerOverlays
@@ -431,6 +512,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         videoSrc={activeSrc}
         onTitleChange={onTitleChange}
         onNext={onNext}
+        subtitles={subtitles}
       />
     </div>
   );
