@@ -1,10 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
+import { formatVideoTitle } from "../utils/formatVideoTitle";
+import {
+  LOCAL_ID_PREFIX,
+  LocalFileHandle,
+  deleteHandle,
+  getHandle,
+  isLocalId,
+  putHandle,
+  readVideoMeta,
+} from "../utils/localFiles";
 
-export type Platform = "x" | "youtube";
+export type Platform = "x" | "youtube" | "local";
 
 export const PLATFORM_LABELS: Record<Platform, string> = {
   x: "X",
   youtube: "YouTube",
+  local: "On this device",
 };
 
 // Saved videos. Written by background.js (see public/content/*.js for how
@@ -30,6 +41,9 @@ export interface WatchListItem {
   savedAt: number;
   watchedAt: number | null;
   resolveError?: string | null;
+  /** Local files only: the original file name and size, for display. */
+  fileName?: string;
+  fileSize?: number;
 }
 
 const WATCHLIST_KEY = "watchlist";
@@ -68,9 +82,16 @@ export const getPlatform = (item: WatchListItem): Platform =>
 export const getSourceUrl = (item: WatchListItem): string =>
   item.sourceUrl || item.tweetUrl || "#";
 
+// Local files have no page to link back to.
+export const hasSourcePage = (item: WatchListItem): boolean =>
+  getPlatform(item) !== "local";
+
 // X handles get an "@"; YouTube stores the channel name.
 export const getAuthorLabel = (item: WatchListItem): string =>
   getPlatform(item) === "x" ? `@${item.author}` : item.author;
+
+export const isLocal = (item: WatchListItem): boolean =>
+  getPlatform(item) === "local";
 
 // Thumbnail URLs to try, best first. YouTube's 1280px maxresdefault isn't
 // generated for every video, so fall back through smaller sizes; the saved
@@ -85,8 +106,9 @@ export const getPosterUrls = (item: WatchListItem): string[] => {
   return urls;
 };
 
+// Local files are opened from their saved handle when played.
 export const isPlayable = (item: WatchListItem): boolean =>
-  Boolean(item.mp4 || item.youtubeId);
+  Boolean(item.mp4 || item.youtubeId || isLocal(item));
 
 export const getItemTitle = (item: WatchListItem): string => {
   if (item.title) return item.title;
@@ -137,8 +159,51 @@ function useWatchList() {
   }, [items]);
 
   const remove = useCallback(
-    async (id: string) =>
-      save((await readLatest()).filter((item) => item.id !== id)),
+    async (id: string) => {
+      await save((await readLatest()).filter((item) => item.id !== id));
+      if (isLocalId(id)) await deleteHandle(id).catch(() => {});
+    },
+    [readLatest, save],
+  );
+
+  // Saves picked files as pointers: a handle in IndexedDB plus a small
+  // list entry. Files already in the list are skipped. Returns how many were
+  // added.
+  const addLocalFiles = useCallback(
+    async (handles: LocalFileHandle[]): Promise<number> => {
+      const latest = await readLatest();
+      const known = (
+        await Promise.all(
+          latest.filter(isLocal).map((i) => getHandle(i.id).catch(() => undefined)),
+        )
+      ).filter((h): h is LocalFileHandle => Boolean(h));
+
+      const added: WatchListItem[] = [];
+      for (const handle of handles) {
+        const dupes = await Promise.all(known.map((k) => k.isSameEntry(handle)));
+        if (dupes.some(Boolean)) continue;
+        const file = await handle.getFile();
+        const meta = await readVideoMeta(file);
+        const id = `${LOCAL_ID_PREFIX}${crypto.randomUUID()}`;
+        await putHandle(id, handle);
+        known.push(handle);
+        added.push({
+          id,
+          platform: "local",
+          author: "On this device",
+          title: formatVideoTitle(file.name),
+          fileName: file.name,
+          fileSize: file.size,
+          poster: meta.poster,
+          durationMs: meta.durationMs,
+          aspectRatio: meta.aspectRatio,
+          savedAt: Date.now() - added.length,
+          watchedAt: null,
+        });
+      }
+      if (added.length) await save([...added, ...(await readLatest())]);
+      return added.length;
+    },
     [readLatest, save],
   );
 
@@ -167,7 +232,7 @@ function useWatchList() {
     [],
   );
 
-  return { items, loaded, remove, update, resolve };
+  return { items, loaded, remove, update, resolve, addLocalFiles };
 }
 
 export default useWatchList;

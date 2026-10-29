@@ -8,6 +8,7 @@ import {
   getPlatform,
   getPosterUrls,
   getSourceUrl,
+  hasSourcePage,
   isPlayable,
 } from "../hooks/useWatchList";
 import { formatTime } from "../utils/formatTime";
@@ -25,6 +26,8 @@ interface WatchListProps {
   onPlay: PlayHandler;
   onRemove: (id: string) => void;
   onOpenSource: () => void;
+  /** Present when the browser can save local files to the list. */
+  onAddFiles?: () => void;
   onSwitchProfile: () => void;
 }
 
@@ -47,7 +50,7 @@ const isNew = (item: WatchListItem) =>
   !item.watchedAt && Date.now() - item.savedAt < DAY_MS;
 
 const matchesQuery = (item: WatchListItem, query: string) =>
-  `${getItemTitle(item)} ${item.author} ${item.authorName || ""} ${item.text || ""}`
+  `${getItemTitle(item)} ${item.author} ${item.authorName || ""} ${item.text || ""} ${item.fileName || ""}`
     .toLowerCase()
     .includes(query);
 
@@ -185,9 +188,13 @@ const WatchListCard: React.FC<{
       <div className="wl-card-body">
         <div className="wl-card-title">{getItemTitle(item)}</div>
         <div className="wl-card-meta">
-          <a href={getSourceUrl(item)} target="_blank" rel="noreferrer">
-            {getAuthorLabel(item)}
-          </a>
+          {hasSourcePage(item) ? (
+            <a href={getSourceUrl(item)} target="_blank" rel="noreferrer">
+              {getAuthorLabel(item)}
+            </a>
+          ) : (
+            <span>{getAuthorLabel(item)}</span>
+          )}
           <span> · {timeAgo(item.savedAt)}</span>
           {!isPlayable(item) && (
             <span className="wl-card-warn"> · resolving</span>
@@ -268,6 +275,7 @@ const WatchList: React.FC<WatchListProps> = ({
   onPlay,
   onRemove,
   onOpenSource,
+  onAddFiles,
   onSwitchProfile,
 }) => {
   const [filter, setFilter] = useState<Platform | "all">("all");
@@ -376,6 +384,11 @@ const WatchList: React.FC<WatchListProps> = ({
               </button>
             ),
           )}
+          {onAddFiles && (
+            <button className="wl-nav-pill" onClick={onAddFiles}>
+              + Add file
+            </button>
+          )}
           <button className="wl-nav-pill" onClick={onOpenSource}>
             Play a file
           </button>
@@ -406,6 +419,9 @@ const WatchList: React.FC<WatchListProps> = ({
                 {hero.authorName || getAuthorLabel(hero)}
               </span>
               {getPlatform(hero) === "x" && <span>@{hero.author}</span>}
+              {getPlatform(hero) === "local" && hero.fileName && (
+                <span>{hero.fileName}</span>
+              )}
               {formatDuration(hero) && <span>{formatDuration(hero)}</span>}
               <span>Saved {timeAgo(hero.savedAt)}</span>
             </div>
@@ -419,14 +435,16 @@ const WatchList: React.FC<WatchListProps> = ({
               >
                 <PlayGlyph /> Play
               </button>
-              <a
-                className="wl-btn wl-btn-secondary"
-                href={getSourceUrl(hero)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open on {PLATFORM_LABELS[getPlatform(hero)]}
-              </a>
+              {hasSourcePage(hero) && (
+                <a
+                  className="wl-btn wl-btn-secondary"
+                  href={getSourceUrl(hero)}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open on {PLATFORM_LABELS[getPlatform(hero)]}
+                </a>
+              )}
             </div>
           </div>
           {heroTag && (

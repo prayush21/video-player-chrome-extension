@@ -102,3 +102,29 @@ describe("multi-platform helpers", () => {
     expect(getItemTitle(yt)).toBe("Blender's video");
   });
 });
+
+describe("local files in My List", () => {
+  it("treats local entries as playable, with no source page", async () => {
+    const { getAuthorLabel, hasSourcePage, isPlayable, PLATFORM_LABELS } =
+      await import("../hooks/useWatchList");
+    const item = {
+      id: "local-1",
+      platform: "local" as const,
+      author: "On this device",
+      savedAt: 0,
+      watchedAt: null,
+    };
+    expect(isPlayable(item)).toBe(true);
+    expect(hasSourcePage(item)).toBe(false);
+    expect(getAuthorLabel(item)).toBe("On this device");
+    expect(PLATFORM_LABELS.local).toBe("On this device");
+  });
+
+  it("still needs a file or YouTube id for X posts", async () => {
+    const { isPlayable, hasSourcePage } = await import("../hooks/useWatchList");
+    const post = { id: "1", author: "a", savedAt: 0, watchedAt: null };
+    expect(isPlayable(post)).toBe(false);
+    expect(isPlayable({ ...post, mp4: "https://v.mp4" })).toBe(true);
+    expect(hasSourcePage(post)).toBe(true);
+  });
+});

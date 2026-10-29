@@ -12,9 +12,16 @@ import useWatchList, {
   getAuthorLabel,
   getItemTitle,
   getPlatform,
+  isLocal,
   isPlayable,
 } from "./hooks/useWatchList";
 import { formatVideoTitle } from "./utils/formatVideoTitle";
+import {
+  ensureReadPermission,
+  getHandle,
+  isLocalFileSupported,
+  pickVideoFiles,
+} from "./utils/localFiles";
 
 // --- Reusable Props Interface ---
 interface VideoPlayerProps {
@@ -569,18 +576,67 @@ const App: React.FC = () => {
     window.history.pushState({}, "", window.location.pathname);
   }, [videoSource]);
 
+  // Turns a saved local file into a playable blob URL, or says why not.
+  const openLocalFile = useCallback(async (id: string) => {
+    try {
+      const handle = await getHandle(id);
+      if (!handle) {
+        setNotice("This file's link was lost. Remove it and add it again.");
+        return null;
+      }
+      if (!(await ensureReadPermission(handle))) {
+        setNotice("Chrome needs permission to read this file. Click Play again.");
+        return null;
+      }
+      return URL.createObjectURL(await handle.getFile());
+    } catch (err) {
+      const name = (err as DOMException).name;
+      setNotice(
+        name === "NotFoundError"
+          ? "That file was moved or deleted. Remove it from My List and add it again."
+          : name === "SecurityError"
+            ? "Click Play on the file to let Chrome open it."
+            : "Couldn't open that file.",
+      );
+      return null;
+    }
+  }, []);
+
+  const addFilesToList = useCallback(async () => {
+    try {
+      const handles = await pickVideoFiles();
+      if (!handles.length) return;
+      const added = await watchList.addLocalFiles(handles);
+      setNotice(
+        added
+          ? `Added ${added} ${added === 1 ? "file" : "files"} to My List.`
+          : "Already in My List.",
+      );
+      setView("list");
+    } catch {
+      setNotice("Couldn't add that file.");
+      setView("list");
+    }
+  }, [watchList]);
+
   const playFromList = useCallback(
     async (id: string, playQueue: string[]) => {
       setNotice("");
       let item = watchList.items.find((i) => i.id === id);
       if (!item) return;
-      if (!isPlayable(item)) {
-        setNotice("Finding the video file...");
-        item = (await watchList.resolve(id)) || item;
+      let source: string | null | undefined;
+      if (isLocal(item)) {
+        source = await openLocalFile(id);
+        if (!source) return;
+      } else {
+        if (!isPlayable(item)) {
+          setNotice("Finding the video file...");
+          item = (await watchList.resolve(id)) || item;
+        }
+        source = item.youtubeId
+          ? `https://www.youtube.com/watch?v=${item.youtubeId}`
+          : item.mp4;
       }
-      const source = item.youtubeId
-        ? `https://www.youtube.com/watch?v=${item.youtubeId}`
-        : item.mp4;
       if (!source) {
         setNotice(
           `Couldn't find a playable file for ${getAuthorLabel(item)}'s post. It may be deleted or private. Try "Open on ${PLATFORM_LABELS[getPlatform(item)]}".`,
@@ -588,12 +644,13 @@ const App: React.FC = () => {
         return;
       }
       setNotice("");
+      if (videoSource?.startsWith("blob:")) URL.revokeObjectURL(videoSource);
       setQueue(playQueue.includes(id) ? playQueue : [id, ...playQueue]);
       setCurrentItemId(id);
       setVideoTitle(getItemTitle(item));
       setVideoSource(source);
     },
-    [watchList],
+    [watchList, videoSource, openLocalFile],
   );
 
   // ?item=<id> plays a saved video straight away (one tab per video).
@@ -778,6 +835,16 @@ const App: React.FC = () => {
           onChange={handleFileChange}
         />
 
+        {isLocalFileSupported() && (
+          <button
+            type="button"
+            className="wl-btn wl-btn-secondary src-add"
+            onClick={addFilesToList}
+          >
+            + Add files to My List
+          </button>
+        )}
+
         <div className="src-or">OR</div>
 
         <form onSubmit={handleUrlSubmit} className="src-form">
@@ -940,6 +1007,7 @@ const App: React.FC = () => {
           onPlay={playFromList}
           onRemove={watchList.remove}
           onOpenSource={() => setView("source")}
+          onAddFiles={isLocalFileSupported() ? addFilesToList : undefined}
           onSwitchProfile={switchProfile}
         />
         {notice && <div className="wl-notice">{notice}</div>}

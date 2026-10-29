@@ -2298,6 +2298,11 @@ button:hover .group-hover\/back\:opacity-100 {
 .src-drop small {
   color: #8c8c8c;
 }
+.src-add {
+  width: 100%;
+  justify-content: center;
+  margin-top: 12px;
+}
 .src-or {
   display: flex;
   align-items: center;
