@@ -16,11 +16,6 @@ Includes everything from 1.4.0, which was never released to users.
 - Profiles that are moods, each built for a different intention: The Binger plays everything in Up Next back to back, Just One plays a single video with no intro, The Curator browses and tidies My List, and Someone Else plays a file from this computer.
 - A "how to save" guide in My List and a bundled demo clip.
 
-### Changed
-- My List has been redesigned in a Netflix-style layout.
-- The "Play a file" screen now matches the My List look.
-- Long titles, file names and channel names are truncated cleanly in My List.
-
 ## [1.3.0]
 
 ### Added
