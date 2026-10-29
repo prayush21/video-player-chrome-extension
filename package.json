@@ -21,15 +21,15 @@
     "version": "node scripts/sync-version.mjs && git add public/manifest.json"
   },
   "dependencies": {
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
-    "@types/chrome": "^0.3.4",
+    "@types/chrome": "^0.3.6",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "postcss": "^8.5.6",
+    "postcss": "^8.5.31",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^4.1.11"
