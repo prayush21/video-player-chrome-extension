@@ -30,7 +30,7 @@ jobs:
       - run: npm run package
 
       # Load-unpacked-ready build for every PR, so reviewers can try it.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: extension-${{ github.sha }}
           path: release/*.zip
@@ -57,7 +57,7 @@ jobs:
       # supports extensions), so no xvfb is needed.
       - run: npm run e2e
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ failure() }}
         with:
           name: playwright-report-${{ github.sha }}
